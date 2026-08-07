@@ -17,10 +17,10 @@ export const HOME_PAGE_COPY = {
 };
 
 export const NAV_ITEMS = [
-  { label: "Availability", href: "#availability" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Packages", href: "#packages" },
-  { label: "Trust", href: "#trust" },
+  { label: "Availability", href: "/#availability" },
+  { label: "How it works", href: "/#how-it-works" },
+  { label: "Packages", href: "/#packages" },
+  { label: "Trust", href: "/#trust" },
 ];
 
 export const HERO_TRUST_POINTS = [

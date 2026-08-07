@@ -16,9 +16,9 @@ export function Header() {
           <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-slate-200">
             {NAV_ITEMS.map((item) => (
               <li key={item.href}>
-                <a className="transition hover:text-emerald-200" href={item.href}>
+                <Link className="transition hover:text-emerald-200" href={item.href}>
                   {item.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

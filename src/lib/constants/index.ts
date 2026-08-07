@@ -17,3 +17,11 @@ export {
   OTHER_STATE_OPTION,
   STATE_OPTIONS,
 } from "./availability";
+
+export {
+  BOOKING_HERO_COPY,
+  BOOKING_PACKAGE_SECTION_COPY,
+  BOOKING_PACKAGES,
+  BOOKING_STEPS,
+  BOOKING_STEPS_COPY,
+} from "./booking";

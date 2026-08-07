@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 type ButtonProps = Readonly<{
   children: React.ReactNode;
   className?: string;
+  disabled?: boolean;
+  onClick?: () => void;
   type?: "button" | "submit" | "reset";
   variant?: "primary" | "secondary" | "outline";
 }>;
@@ -10,6 +12,8 @@ type ButtonProps = Readonly<{
 export function Button({
   children,
   className,
+  disabled = false,
+  onClick,
   type = "button",
   variant = "primary",
 }: ButtonProps) {
@@ -23,8 +27,12 @@ export function Button({
           "border border-slate-200 bg-white text-slate-950 shadow-sm hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50",
         variant === "outline" &&
           "border border-white/25 bg-white/10 text-white shadow-sm backdrop-blur hover:-translate-y-0.5 hover:bg-white/20",
+        disabled &&
+          "cursor-not-allowed opacity-55 hover:translate-y-0 hover:shadow-lg",
         className,
       )}
+      disabled={disabled}
+      onClick={onClick}
       type={type}
     >
       {children}
