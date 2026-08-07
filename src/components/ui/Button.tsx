@@ -3,12 +3,14 @@ import { cn } from "@/lib/utils";
 type ButtonProps = Readonly<{
   children: React.ReactNode;
   className?: string;
+  type?: "button" | "submit" | "reset";
   variant?: "primary" | "secondary" | "outline";
 }>;
 
 export function Button({
   children,
   className,
+  type = "button",
   variant = "primary",
 }: ButtonProps) {
   return (
@@ -23,7 +25,7 @@ export function Button({
           "border border-white/25 bg-white/10 text-white shadow-sm backdrop-blur hover:-translate-y-0.5 hover:bg-white/20",
         className,
       )}
-      type="button"
+      type={type}
     >
       {children}
     </button>

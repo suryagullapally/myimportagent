@@ -1,5 +1,5 @@
 import {
-  AvailabilityPreview,
+  AvailabilityChecker,
   CTASection,
   HeroSection,
   HowItWorks,
@@ -12,7 +12,7 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <AvailabilityPreview />
+      <AvailabilityChecker />
       <HowItWorks />
       <PackageCards />
       <WhyVerify />

@@ -29,26 +29,6 @@ export const HERO_TRUST_POINTS = [
   "Dispatch handover confirmation",
 ];
 
-export const AVAILABILITY_PREVIEW = {
-  eyebrow: "Coverage preview",
-  title: "Check whether an agent can visit the exporter location.",
-  description:
-    "Start with the exporter state and city to understand where local checks are planned before you request a visit.",
-  stateLabel: "Exporter State",
-  cityLabel: "Exporter City",
-  exampleState: "Telangana",
-  exampleCity: "Hyderabad",
-  availableStates: [
-    "Telangana",
-    "Delhi NCR",
-    "Maharashtra",
-    "Gujarat",
-    "Tamil Nadu",
-    "Karnataka",
-  ],
-  status: "Example coverage available",
-};
-
 export const SECTION_COPY = {
   howItWorks: {
     eyebrow: "How it works",

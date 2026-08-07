@@ -1,4 +1,4 @@
-export { AvailabilityPreview } from "./AvailabilityPreview";
+export { AvailabilityChecker } from "./AvailabilityChecker";
 export { CTASection } from "./CTASection";
 export { Hero3DVisual } from "./Hero3DVisual";
 export { HeroSection } from "./HeroSection";
