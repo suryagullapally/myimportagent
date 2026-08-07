@@ -26,10 +26,11 @@ export function BookingHero() {
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-200">
             Booking status
           </p>
-          <p className="mt-4 text-2xl font-bold">Package selection only</p>
+          <p className="mt-4 text-2xl font-bold">First booking stages</p>
           <p className="mt-3 text-sm leading-6 text-slate-300">
-            The full form, email verification, pricing, payment, and booking
-            confirmation will be added in later frontend and backend phases.
+            Choose a package, enter importer details, and try the demo email
+            verification placeholder before later exporter, pricing, and payment
+            stages are added.
           </p>
         </div>
       </div>

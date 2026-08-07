@@ -8,15 +8,19 @@ export const BOOKING_HERO_COPY = {
   trustLine: "Verification-only service. No logistics or customs clearance.",
 };
 
+export const ACTIVE_BOOKING_STEPS: readonly BookingStep[] = [
+  { number: 1, title: "Choose package" },
+  { number: 2, title: "Importer details" },
+  { number: 3, title: "Verify email" },
+];
+
 export const BOOKING_PACKAGE_SECTION_COPY = {
   eyebrow: "Choose package",
   title: "Start with the verification that matches your buying risk.",
   description:
-    "This first step only helps you choose a package. Exporter details, product information, pricing, and payment will come later.",
-  continueButton: "Continue to Booking Details",
+    "Choose the verification package you want to start with. You can review this before the final booking is confirmed.",
+  continueButton: "Continue",
   choosePackageMessage: "Choose a verification package to continue.",
-  nextStepMessage:
-    "Package selected. The booking details step will be built next.",
 };
 
 export const BOOKING_PACKAGES: readonly BookingPackage[] = [
@@ -59,3 +63,56 @@ export const BOOKING_STEPS: readonly BookingStep[] = [
   { number: 6, title: "Get price" },
   { number: 7, title: "Pay and confirm booking" },
 ];
+
+export const IMPORTER_DETAILS_COPY = {
+  eyebrow: "Importer details",
+  title: "Tell us who is requesting the verification.",
+  description:
+    "These details are only held in this frontend demo for now. Later, they will be sent securely to the Java Spring Boot booking API.",
+  fullNameLabel: "Full name",
+  companyNameLabel: "Company name",
+  companyNameHint: "Optional",
+  countryLabel: "Country",
+  phoneLabel: "WhatsApp / phone number",
+  emailLabel: "Email address",
+  fullNamePlaceholder: "Jane Smith",
+  companyNamePlaceholder: "Smith Imports Ltd",
+  countryPlaceholder: "United Kingdom",
+  phonePlaceholder: "+44 7700 900123",
+  emailPlaceholder: "jane@example.com",
+};
+
+export const IMPORTER_DETAILS_VALIDATION = {
+  fullNameRequired: "Full name is required.",
+  countryRequired: "Country is required.",
+  phoneRequired: "WhatsApp or phone number is required.",
+  emailRequired: "Email address is required.",
+  emailInvalid: "Email address must look valid.",
+};
+
+export const EMAIL_VERIFICATION_COPY = {
+  eyebrow: "Email verification",
+  title: "Verify your email before the next booking stage.",
+  description:
+    "This temporary demo checks a fake code only. Real email OTP sending and verification will be handled by the Java Spring Boot backend later.",
+  emailLabel: "Email address",
+  codeLabel: "Verification code",
+  codePlaceholder: "Enter 123456",
+  sendButton: "Send verification code",
+  verifyButton: "Verify Email",
+  sentMessage: "Demo code ready. Use 123456 for now.",
+  successMessage: "Email verified successfully.",
+  invalidMessage: "Invalid demo code. Use 123456 for now.",
+};
+
+export const BOOKING_FLOW_COPY = {
+  selectedPackageLabel: "Selected package",
+  noPackageSelected: "No package selected yet",
+  backButton: "Back",
+  continueButton: "Continue",
+  completeRequiredMessage: "Complete the required fields to continue.",
+  packageRequiredMessage: "Choose a verification package to continue.",
+  emailRequiredMessage: "Verify your email with the demo code to continue.",
+  finalPlaceholderMessage:
+    "Email verified. Exporter details, pricing, payment, and confirmation will be added in the next build stages.",
+};

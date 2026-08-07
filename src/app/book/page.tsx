@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import {
+  BookingFlow,
   BookingHero,
   BookingStepsPreview,
-  PackageSelector,
 } from "@/components/book";
 import { Footer, Header } from "@/components/layout";
 import { SITE_CONFIG } from "@/lib/constants";
@@ -19,7 +19,7 @@ export default function BookPage() {
       <Header />
       <main className="flex-1">
         <BookingHero />
-        <PackageSelector />
+        <BookingFlow />
         <BookingStepsPreview />
       </main>
       <Footer />

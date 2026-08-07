@@ -21,4 +21,11 @@ export type Benefit = Readonly<{
 }>;
 
 export type { AvailabilityRegion, AvailabilityResult } from "./availability";
-export type { BookingPackage, BookingStep } from "./booking";
+export type {
+  ActiveBookingStep,
+  BookingPackage,
+  BookingStep,
+  ImporterDetails,
+  ImporterDetailsErrors,
+  ImporterDetailsField,
+} from "./booking";
