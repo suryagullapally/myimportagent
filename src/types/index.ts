@@ -25,7 +25,21 @@ export type {
   ActiveBookingStep,
   BookingPackage,
   BookingStep,
+  ExporterDetails,
+  ExporterDetailsErrors,
+  ExporterDetailsField,
   ImporterDetails,
   ImporterDetailsErrors,
   ImporterDetailsField,
+  PaymentStatus,
+  ProductOrderDetails,
+  ProductOrderDetailsErrors,
+  ProductOrderDetailsField,
 } from "./booking";
+export type {
+  CurrencyCode,
+  PricingAddOn,
+  PricingInput,
+  PricingResult,
+  SelectedBaseReason,
+} from "./pricing";
