@@ -1,14 +1,14 @@
 import type { Benefit, PackageCard, WorkflowStep } from "@/types";
 
 export const SITE_CONFIG = {
-  name: "myimportagent",
+  name: "MyImportAgent",
   description:
     "UK-facing verification agency platform for overseas importers buying from India.",
 };
 
 export const HOME_PAGE_COPY = {
   eyebrow: "UK-facing verification for Indian sourcing",
-  headline: "Buying from India? Let myimportagent check it first.",
+  headline: "Buying from India? Let our agent check it first.",
   supportingLine:
     "Book a local verification agent in India to verify sellers, products, packing, or dispatch before you pay or ship.",
   trustLine: "Verification-only service. No logistics. No false guarantees.",
@@ -34,7 +34,7 @@ export const SECTION_COPY = {
     eyebrow: "How it works",
     title: "A clear verification flow before money or goods move.",
     description:
-      "The customer stays responsible for the import decision while myimportagent collects local evidence in India.",
+      "The customer stays responsible for the import decision while MyImportAgent collects local evidence in India.",
   },
   packages: {
     eyebrow: "Verification packages",

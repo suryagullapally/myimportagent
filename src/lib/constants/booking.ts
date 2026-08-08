@@ -15,6 +15,7 @@ export const ACTIVE_BOOKING_STEPS: readonly BookingStep[] = [
   { number: 4, title: "Exporter details" },
   { number: 5, title: "Product/order details" },
   { number: 6, title: "Quote summary" },
+  { number: 7, title: "Review & confirm" },
 ];
 
 export const BOOKING_PACKAGE_SECTION_COPY = {
@@ -65,7 +66,7 @@ export const BOOKING_STEPS: readonly BookingStep[] = [
   { number: 5, title: "Enter exporter details" },
   { number: 6, title: "Enter product and order details" },
   { number: 7, title: "Review quote summary" },
-  { number: 8, title: "Review booking details" },
+  { number: 8, title: "Review and confirm request" },
   { number: 9, title: "Pay and confirm booking" },
 ];
 
@@ -216,6 +217,7 @@ export const BOOKING_FLOW_COPY = {
   backButton: "Back",
   continueButton: "Continue",
   continueToReviewButton: "Continue to Review",
+  submitButton: "Submit Booking Request",
   completeRequiredMessage: "Complete the required fields to continue.",
   packageRequiredMessage: "Choose a verification package to continue.",
   emailRequiredMessage: "Verify your email with the demo code to continue.",
@@ -225,6 +227,35 @@ export const BOOKING_FLOW_COPY = {
     "Complete the product/order details and select at least one checklist item.",
   quoteRequiredMessage:
     "A quote cannot be calculated until the exporter state and import value are available.",
+  confirmationsRequiredMessage:
+    "Please tick all confirmation checkboxes before submitting.",
   finalPlaceholderMessage:
-    "Quote captured in frontend state. Review, payment, and final confirmation will be added in the next build stages.",
+    "Demo booking request prepared successfully. Backend submission will be added later.",
+};
+
+export const REVIEW_CONFIRM_COPY = {
+  eyebrow: "Review & confirm",
+  title: "Review your booking request before submission.",
+  description:
+    "Check every section carefully. This is still a frontend-only demo and does not create a real booking yet.",
+  selectedPackageTitle: "Selected package",
+  importerTitle: "Importer details",
+  exporterTitle: "Exporter details",
+  productOrderTitle: "Product / order details",
+  quoteTitle: "Quote summary",
+  emailVerified: "Email verified",
+  emailNotVerified:
+    "Email is not verified. Please go back to the email verification step before a real booking can proceed.",
+  notProvided: "Not provided",
+  quoteNote:
+    "Final price will be verified by myimportagent before payment. This estimate is based on the details you provided.",
+  confirmationsTitle: "Confirm before submitting",
+  confirmationLabels: {
+    verificationOnly:
+      "I understand myimportagent provides verification only and does not provide logistics, customs clearance, freight forwarding, or insurance.",
+    accurateInformation:
+      "I confirm the information provided is accurate to the best of my knowledge.",
+    priceAndAvailabilityReview:
+      "I understand the final price and availability may be reviewed before payment.",
+  },
 };

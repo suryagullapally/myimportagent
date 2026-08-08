@@ -8,7 +8,7 @@ type BookingStepIndicatorProps = Readonly<{
 export function BookingStepIndicator({ activeStep }: BookingStepIndicatorProps) {
   return (
     <nav aria-label="Booking progress">
-      <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
         {ACTIVE_BOOKING_STEPS.map((step) => {
           const isActive = step.number === activeStep;
           const isComplete = step.number < activeStep;

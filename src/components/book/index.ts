@@ -8,3 +8,4 @@ export { ImporterDetailsForm } from "./ImporterDetailsForm";
 export { PackageSelector } from "./PackageSelector";
 export { ProductOrderDetailsForm } from "./ProductOrderDetailsForm";
 export { QuoteSummary } from "./QuoteSummary";
+export { ReviewConfirm } from "./ReviewConfirm";

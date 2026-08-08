@@ -23,6 +23,8 @@ import type {
   ProductOrderDetails,
   ProductOrderDetailsErrors,
   ProductOrderDetailsField,
+  ReviewConfirmationKey,
+  ReviewConfirmations,
 } from "@/types";
 import { BookingStepIndicator } from "./BookingStepIndicator";
 import { EmailVerificationPlaceholder } from "./EmailVerificationPlaceholder";
@@ -31,6 +33,7 @@ import { ImporterDetailsForm } from "./ImporterDetailsForm";
 import { PackageSelector } from "./PackageSelector";
 import { ProductOrderDetailsForm } from "./ProductOrderDetailsForm";
 import { QuoteSummary } from "./QuoteSummary";
+import { ReviewConfirm } from "./ReviewConfirm";
 
 const EMPTY_IMPORTER_DETAILS: ImporterDetails = {
   fullName: "",
@@ -64,6 +67,12 @@ const EMPTY_PRODUCT_ORDER_DETAILS: ProductOrderDetails = {
   checklistItems: [],
 };
 
+const EMPTY_REVIEW_CONFIRMATIONS: ReviewConfirmations = {
+  verificationOnly: false,
+  accurateInformation: false,
+  priceAndAvailabilityReview: false,
+};
+
 export function BookingFlow() {
   const [activeStep, setActiveStep] = useState<ActiveBookingStep>(1);
   const [selectedPackageId, setSelectedPackageId] = useState("");
@@ -78,6 +87,8 @@ export function BookingFlow() {
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<readonly string[]>(
     [],
   );
+  const [reviewConfirmations, setReviewConfirmations] =
+    useState<ReviewConfirmations>(EMPTY_REVIEW_CONFIRMATIONS);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [flowMessage, setFlowMessage] = useState("");
 
@@ -104,13 +115,17 @@ export function BookingFlow() {
   const isExporterDetailsValid = Object.keys(exporterErrors).length === 0;
   const isProductOrderDetailsValid =
     Object.keys(productOrderErrors).length === 0;
+  const areReviewConfirmationsComplete = Object.values(
+    reviewConfirmations,
+  ).every(Boolean);
   const canContinue =
     (activeStep === 1 && Boolean(selectedPackage)) ||
     (activeStep === 2 && isImporterDetailsValid) ||
     (activeStep === 3 && isEmailVerified) ||
     (activeStep === 4 && isExporterDetailsValid) ||
     (activeStep === 5 && isProductOrderDetailsValid) ||
-    (activeStep === 6 && quotePricing.finalPrice !== null);
+    (activeStep === 6 && quotePricing.finalPrice !== null) ||
+    (activeStep === 7 && areReviewConfirmationsComplete);
 
   function handleSelectPackage(packageId: string) {
     setSelectedPackageId(packageId);
@@ -179,6 +194,14 @@ export function BookingFlow() {
     setFlowMessage("");
   }
 
+  function handleReviewConfirmationToggle(key: ReviewConfirmationKey) {
+    setReviewConfirmations((currentConfirmations) => ({
+      ...currentConfirmations,
+      [key]: !currentConfirmations[key],
+    }));
+    setFlowMessage("");
+  }
+
   function handleBack() {
     if (activeStep === 1) {
       return;
@@ -233,8 +256,17 @@ export function BookingFlow() {
       return;
     }
 
+    if (activeStep === 6) {
+      // Future integration point: ask the Java Spring Boot pricing API to
+      // verify the quote before moving into the review step.
+      setActiveStep(7);
+      setFlowMessage("");
+      return;
+    }
+
     // Future integration point: ask the Java Spring Boot pricing API to
-    // verify the quote before moving into a review/payment step.
+    // verify the final price, create the booking draft, save the booking to
+    // PostgreSQL, and then start the Stripe payment flow later.
     setFlowMessage(BOOKING_FLOW_COPY.finalPlaceholderMessage);
   }
 
@@ -307,6 +339,19 @@ export function BookingFlow() {
                 selectedPackage={selectedPackage}
               />
             )}
+
+            {activeStep === 7 && (
+              <ReviewConfirm
+                confirmations={reviewConfirmations}
+                exporterDetails={exporterDetails}
+                importerDetails={importerDetails}
+                isEmailVerified={isEmailVerified}
+                onToggleConfirmation={handleReviewConfirmationToggle}
+                productOrderDetails={productOrderDetails}
+                selectedAddOnIds={selectedAddOnIds}
+                selectedPackage={selectedPackage}
+              />
+            )}
           </div>
 
           <div className="mt-10 flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
@@ -332,9 +377,7 @@ export function BookingFlow() {
                 disabled={!canContinue}
                 onClick={handleContinue}
               >
-                {activeStep === 6
-                  ? BOOKING_FLOW_COPY.continueToReviewButton
-                  : BOOKING_FLOW_COPY.continueButton}
+                {getPrimaryButtonLabel(activeStep)}
               </Button>
             </div>
           </div>
@@ -468,5 +511,21 @@ function getStepRequirementMessage(activeStep: ActiveBookingStep) {
     return BOOKING_FLOW_COPY.productRequiredMessage;
   }
 
-  return BOOKING_FLOW_COPY.quoteRequiredMessage;
+  if (activeStep === 6) {
+    return BOOKING_FLOW_COPY.quoteRequiredMessage;
+  }
+
+  return BOOKING_FLOW_COPY.confirmationsRequiredMessage;
+}
+
+function getPrimaryButtonLabel(activeStep: ActiveBookingStep) {
+  if (activeStep === 6) {
+    return BOOKING_FLOW_COPY.continueToReviewButton;
+  }
+
+  if (activeStep === 7) {
+    return BOOKING_FLOW_COPY.submitButton;
+  }
+
+  return BOOKING_FLOW_COPY.continueButton;
 }
