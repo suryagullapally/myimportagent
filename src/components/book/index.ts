@@ -4,6 +4,7 @@ export { BookingStepIndicator } from "./BookingStepIndicator";
 export { BookingStepsPreview } from "./BookingStepsPreview";
 export { EmailVerificationPlaceholder } from "./EmailVerificationPlaceholder";
 export { ExporterDetailsForm } from "./ExporterDetailsForm";
+export { FileUploadPlaceholder } from "./FileUploadPlaceholder";
 export { ImporterDetailsForm } from "./ImporterDetailsForm";
 export { PackageSelector } from "./PackageSelector";
 export { ProductOrderDetailsForm } from "./ProductOrderDetailsForm";

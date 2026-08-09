@@ -10,7 +10,7 @@ export type BookingStep = Readonly<{
   title: string;
 }>;
 
-export type ActiveBookingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type ActiveBookingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export type ImporterDetails = Readonly<{
   fullName: string;
@@ -66,6 +66,13 @@ export type ProductOrderDetailsField = keyof Omit<
 export type ProductOrderDetailsErrors = Partial<
   Record<ProductOrderDetailsField | "checklistItems", string>
 >;
+
+export type SupportingFileCategory =
+  | "invoice"
+  | "productImages"
+  | "supplierDocuments";
+
+export type SupportingFiles = Record<SupportingFileCategory, readonly string[]>;
 
 export type ReviewConfirmationKey =
   | "verificationOnly"

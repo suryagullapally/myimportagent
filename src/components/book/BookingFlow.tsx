@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui";
 import {
@@ -7,6 +8,7 @@ import {
   BOOKING_FLOW_COPY,
   BOOKING_PACKAGES,
   EXPORTER_DETAILS_VALIDATION,
+  FILE_UPLOAD_COPY,
   IMPORTER_DETAILS_VALIDATION,
   OTHER_STATE_OPTION,
   PRODUCT_ORDER_DETAILS_VALIDATION,
@@ -25,10 +27,13 @@ import type {
   ProductOrderDetailsField,
   ReviewConfirmationKey,
   ReviewConfirmations,
+  SupportingFileCategory,
+  SupportingFiles,
 } from "@/types";
 import { BookingStepIndicator } from "./BookingStepIndicator";
 import { EmailVerificationPlaceholder } from "./EmailVerificationPlaceholder";
 import { ExporterDetailsForm } from "./ExporterDetailsForm";
+import { FileUploadPlaceholder } from "./FileUploadPlaceholder";
 import { ImporterDetailsForm } from "./ImporterDetailsForm";
 import { PackageSelector } from "./PackageSelector";
 import { ProductOrderDetailsForm } from "./ProductOrderDetailsForm";
@@ -73,7 +78,14 @@ const EMPTY_REVIEW_CONFIRMATIONS: ReviewConfirmations = {
   priceAndAvailabilityReview: false,
 };
 
+const EMPTY_SUPPORTING_FILES: SupportingFiles = {
+  invoice: [],
+  productImages: [],
+  supplierDocuments: [],
+};
+
 export function BookingFlow() {
+  const router = useRouter();
   const [activeStep, setActiveStep] = useState<ActiveBookingStep>(1);
   const [selectedPackageId, setSelectedPackageId] = useState("");
   const [importerDetails, setImporterDetails] = useState<ImporterDetails>(
@@ -87,9 +99,13 @@ export function BookingFlow() {
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<readonly string[]>(
     [],
   );
+  const [supportingFiles, setSupportingFiles] = useState<SupportingFiles>(
+    EMPTY_SUPPORTING_FILES,
+  );
   const [reviewConfirmations, setReviewConfirmations] =
     useState<ReviewConfirmations>(EMPTY_REVIEW_CONFIRMATIONS);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isSubmittingDemo, setIsSubmittingDemo] = useState(false);
   const [flowMessage, setFlowMessage] = useState("");
 
   const selectedPackage = useMemo(
@@ -124,8 +140,11 @@ export function BookingFlow() {
     (activeStep === 3 && isEmailVerified) ||
     (activeStep === 4 && isExporterDetailsValid) ||
     (activeStep === 5 && isProductOrderDetailsValid) ||
-    (activeStep === 6 && quotePricing.finalPrice !== null) ||
-    (activeStep === 7 && areReviewConfirmationsComplete);
+    activeStep === 6 ||
+    (activeStep === 7 && quotePricing.finalPrice !== null) ||
+    (activeStep === 8 &&
+      areReviewConfirmationsComplete &&
+      !isSubmittingDemo);
 
   function handleSelectPackage(packageId: string) {
     setSelectedPackageId(packageId);
@@ -194,6 +213,41 @@ export function BookingFlow() {
     setFlowMessage("");
   }
 
+  function handleAddDemoFile(category: SupportingFileCategory) {
+    const demoFileName = FILE_UPLOAD_COPY.sections.find(
+      (section) => section.category === category,
+    )?.demoFileName;
+
+    if (!demoFileName) {
+      return;
+    }
+
+    setSupportingFiles((currentFiles) => {
+      if (currentFiles[category].includes(demoFileName)) {
+        return currentFiles;
+      }
+
+      return {
+        ...currentFiles,
+        [category]: [...currentFiles[category], demoFileName],
+      };
+    });
+    setFlowMessage("");
+  }
+
+  function handleRemoveDemoFile(
+    category: SupportingFileCategory,
+    fileName: string,
+  ) {
+    setSupportingFiles((currentFiles) => ({
+      ...currentFiles,
+      [category]: currentFiles[category].filter(
+        (selectedFileName) => selectedFileName !== fileName,
+      ),
+    }));
+    setFlowMessage("");
+  }
+
   function handleReviewConfirmationToggle(key: ReviewConfirmationKey) {
     setReviewConfirmations((currentConfirmations) => ({
       ...currentConfirmations,
@@ -203,7 +257,7 @@ export function BookingFlow() {
   }
 
   function handleBack() {
-    if (activeStep === 1) {
+    if (activeStep === 1 || isSubmittingDemo) {
       return;
     }
 
@@ -249,25 +303,53 @@ export function BookingFlow() {
 
     if (activeStep === 5) {
       // Future integration point: send product/order details and checklist
-      // selections to the Java Spring Boot API before pricing is calculated.
-      // The backend can return the authoritative quote for step 6.
+      // selections to the Java Spring Boot API before supporting files are
+      // attached to the booking draft.
       setActiveStep(6);
       setFlowMessage("");
       return;
     }
 
     if (activeStep === 6) {
-      // Future integration point: ask the Java Spring Boot pricing API to
-      // verify the quote before moving into the review step.
+      // Future integration point: replace these fake file names with secure
+      // uploads handled by the Java Spring Boot API and object storage.
       setActiveStep(7);
       setFlowMessage("");
       return;
     }
 
-    // Future integration point: ask the Java Spring Boot pricing API to
-    // verify the final price, create the booking draft, save the booking to
-    // PostgreSQL, and then start the Stripe payment flow later.
-    setFlowMessage(BOOKING_FLOW_COPY.finalPlaceholderMessage);
+    if (activeStep === 7) {
+      // Future integration point: ask the Java Spring Boot pricing API to
+      // verify the quote before moving into the review step.
+      setActiveStep(8);
+      setFlowMessage("");
+      return;
+    }
+
+    handleDemoSubmit();
+  }
+
+  function handleDemoSubmit() {
+    setIsSubmittingDemo(true);
+    setFlowMessage(BOOKING_FLOW_COPY.finalSubmitLoadingMessage);
+
+    // Future integration point: create booking draft, verify final price,
+    // save the booking to PostgreSQL, and start the Stripe payment flow from
+    // the Java Spring Boot REST API. This demo only prepares local UI state.
+    window.setTimeout(() => {
+      const demoReference = `MIA-DEMO-${Math.floor(
+        10000 + Math.random() * 90000,
+      )}`;
+      const params = new URLSearchParams({
+        reference: demoReference,
+      });
+
+      if (selectedPackage?.title) {
+        params.set("package", selectedPackage.title);
+      }
+
+      router.push(`/book/confirmation?${params.toString()}`);
+    }, 700);
   }
 
   return (
@@ -331,6 +413,14 @@ export function BookingFlow() {
             )}
 
             {activeStep === 6 && (
+              <FileUploadPlaceholder
+                files={supportingFiles}
+                onAddDemoFile={handleAddDemoFile}
+                onRemoveDemoFile={handleRemoveDemoFile}
+              />
+            )}
+
+            {activeStep === 7 && (
               <QuoteSummary
                 exporterDetails={exporterDetails}
                 onToggleAddOn={handleAddOnToggle}
@@ -340,7 +430,7 @@ export function BookingFlow() {
               />
             )}
 
-            {activeStep === 7 && (
+            {activeStep === 8 && (
               <ReviewConfirm
                 confirmations={reviewConfirmations}
                 exporterDetails={exporterDetails}
@@ -350,13 +440,14 @@ export function BookingFlow() {
                 productOrderDetails={productOrderDetails}
                 selectedAddOnIds={selectedAddOnIds}
                 selectedPackage={selectedPackage}
+                supportingFiles={supportingFiles}
               />
             )}
           </div>
 
           <div className="mt-10 flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
             <Button
-              disabled={activeStep === 1}
+              disabled={activeStep === 1 || isSubmittingDemo}
               onClick={handleBack}
               variant="secondary"
             >
@@ -377,7 +468,7 @@ export function BookingFlow() {
                 disabled={!canContinue}
                 onClick={handleContinue}
               >
-                {getPrimaryButtonLabel(activeStep)}
+                {getPrimaryButtonLabel(activeStep, isSubmittingDemo)}
               </Button>
             </div>
           </div>
@@ -512,18 +603,33 @@ function getStepRequirementMessage(activeStep: ActiveBookingStep) {
   }
 
   if (activeStep === 6) {
+    return BOOKING_FLOW_COPY.completeRequiredMessage;
+  }
+
+  if (activeStep === 7) {
     return BOOKING_FLOW_COPY.quoteRequiredMessage;
   }
 
   return BOOKING_FLOW_COPY.confirmationsRequiredMessage;
 }
 
-function getPrimaryButtonLabel(activeStep: ActiveBookingStep) {
+function getPrimaryButtonLabel(
+  activeStep: ActiveBookingStep,
+  isSubmittingDemo: boolean,
+) {
   if (activeStep === 6) {
-    return BOOKING_FLOW_COPY.continueToReviewButton;
+    return BOOKING_FLOW_COPY.continueToQuoteButton;
   }
 
   if (activeStep === 7) {
+    return BOOKING_FLOW_COPY.continueToReviewButton;
+  }
+
+  if (activeStep === 8) {
+    if (isSubmittingDemo) {
+      return BOOKING_FLOW_COPY.submittingButton;
+    }
+
     return BOOKING_FLOW_COPY.submitButton;
   }
 

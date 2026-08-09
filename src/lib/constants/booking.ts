@@ -14,8 +14,9 @@ export const ACTIVE_BOOKING_STEPS: readonly BookingStep[] = [
   { number: 3, title: "Verify email" },
   { number: 4, title: "Exporter details" },
   { number: 5, title: "Product/order details" },
-  { number: 6, title: "Quote summary" },
-  { number: 7, title: "Review & confirm" },
+  { number: 6, title: "Upload files" },
+  { number: 7, title: "Quote summary" },
+  { number: 8, title: "Review & confirm" },
 ];
 
 export const BOOKING_PACKAGE_SECTION_COPY = {
@@ -211,13 +212,53 @@ export const PRODUCT_ORDER_DETAILS_VALIDATION = {
   checklistRequired: "Select at least one verification checklist item.",
 };
 
+export const FILE_UPLOAD_COPY = {
+  eyebrow: "Supporting files",
+  title: "Add supporting documents for the verification request.",
+  description:
+    "These upload areas are placeholders for now. They show how documents will be attached before secure upload is connected.",
+  note:
+    "File upload is currently a frontend placeholder. Real secure upload will be connected later through the Java Spring Boot backend.",
+  fakeUploadButton: "Choose demo file",
+  removeFileLabel: "Remove",
+  noFilesSelected: "No demo files selected yet.",
+  sections: [
+    {
+      category: "invoice",
+      title: "Invoice / Proforma Invoice",
+      description:
+        "Attach the invoice or proforma invoice that explains the order value and supplier details.",
+      acceptedTypes: "Accepted types: PDF, JPG, PNG",
+      demoFileName: "proforma-invoice-demo.pdf",
+    },
+    {
+      category: "productImages",
+      title: "Product Reference Images",
+      description:
+        "Add product photos or reference images so the agent knows what to compare on site.",
+      acceptedTypes: "Accepted types: JPG, PNG",
+      demoFileName: "product-reference-demo.jpg",
+    },
+    {
+      category: "supplierDocuments",
+      title: "Supplier Documents",
+      description:
+        "Examples: invoice, quotation, product catalogue, packing list.",
+      acceptedTypes: "Accepted types: PDF, JPG, PNG",
+      demoFileName: "supplier-document-demo.pdf",
+    },
+  ],
+} as const;
+
 export const BOOKING_FLOW_COPY = {
   selectedPackageLabel: "Selected package",
   noPackageSelected: "No package selected yet",
   backButton: "Back",
   continueButton: "Continue",
+  continueToQuoteButton: "Continue to Quote",
   continueToReviewButton: "Continue to Review",
   submitButton: "Submit Booking Request",
+  submittingButton: "Preparing request...",
   completeRequiredMessage: "Complete the required fields to continue.",
   packageRequiredMessage: "Choose a verification package to continue.",
   emailRequiredMessage: "Verify your email with the demo code to continue.",
@@ -229,6 +270,7 @@ export const BOOKING_FLOW_COPY = {
     "A quote cannot be calculated until the exporter state and import value are available.",
   confirmationsRequiredMessage:
     "Please tick all confirmation checkboxes before submitting.",
+  finalSubmitLoadingMessage: "Preparing your demo booking request...",
   finalPlaceholderMessage:
     "Demo booking request prepared successfully. Backend submission will be added later.",
 };
@@ -242,6 +284,7 @@ export const REVIEW_CONFIRM_COPY = {
   importerTitle: "Importer details",
   exporterTitle: "Exporter details",
   productOrderTitle: "Product / order details",
+  supportingFilesTitle: "Supporting files",
   quoteTitle: "Quote summary",
   emailVerified: "Email verified",
   emailNotVerified:
@@ -258,4 +301,23 @@ export const REVIEW_CONFIRM_COPY = {
     priceAndAvailabilityReview:
       "I understand the final price and availability may be reviewed before payment.",
   },
+};
+
+export const BOOKING_CONFIRMATION_COPY = {
+  headline: "Booking request prepared",
+  supportingText:
+    "Your demo booking request has been prepared successfully. Backend submission, payment, and admin review will be connected later.",
+  referenceLabel: "Demo booking reference",
+  packageLabel: "Selected package",
+  missingPackageLabel: "Package not available in demo link",
+  nextStepsTitle: "Next steps preview",
+  nextSteps: [
+    "myimportagent reviews the request",
+    "Final price is confirmed",
+    "Payment link is sent",
+    "Verification agent is assigned",
+    "Report is delivered after verification",
+  ],
+  homeButton: "Back to Home",
+  startAnotherButton: "Start Another Booking",
 };

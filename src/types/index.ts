@@ -37,6 +37,8 @@ export type {
   ProductOrderDetailsField,
   ReviewConfirmationKey,
   ReviewConfirmations,
+  SupportingFileCategory,
+  SupportingFiles,
 } from "./booking";
 export type {
   CurrencyCode,

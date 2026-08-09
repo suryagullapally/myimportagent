@@ -13,6 +13,7 @@ import type {
   ProductOrderDetails,
   ReviewConfirmationKey,
   ReviewConfirmations,
+  SupportingFiles,
 } from "@/types";
 
 type ReviewConfirmProps = Readonly<{
@@ -22,6 +23,7 @@ type ReviewConfirmProps = Readonly<{
   productOrderDetails: ProductOrderDetails;
   selectedAddOnIds: readonly string[];
   selectedPackage: BookingPackage | undefined;
+  supportingFiles: SupportingFiles;
   confirmations: ReviewConfirmations;
   onToggleConfirmation: (key: ReviewConfirmationKey) => void;
 }>;
@@ -33,6 +35,7 @@ export function ReviewConfirm({
   productOrderDetails,
   selectedAddOnIds,
   selectedPackage,
+  supportingFiles,
   confirmations,
   onToggleConfirmation,
 }: ReviewConfirmProps) {
@@ -200,6 +203,10 @@ export function ReviewConfirm({
           </div>
         </ReviewSection>
 
+        <ReviewSection title={REVIEW_CONFIRM_COPY.supportingFilesTitle}>
+          <SupportingFilesReview files={supportingFiles} />
+        </ReviewSection>
+
         <ReviewSection title={REVIEW_CONFIRM_COPY.quoteTitle}>
           <QuoteReview pricing={pricing} selectedAddOns={selectedAddOns} />
           <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
@@ -312,6 +319,49 @@ function OptionalLinkReviewRow({ label, value }: ReviewRowProps) {
       >
         {value}
       </a>
+    </div>
+  );
+}
+
+type SupportingFilesReviewProps = Readonly<{
+  files: SupportingFiles;
+}>;
+
+function SupportingFilesReview({ files }: SupportingFilesReviewProps) {
+  const fileGroups = [
+    { label: "Invoice / Proforma Invoice", fileNames: files.invoice },
+    { label: "Product Reference Images", fileNames: files.productImages },
+    { label: "Supplier Documents", fileNames: files.supplierDocuments },
+  ];
+
+  return (
+    <div className="grid gap-4 md:grid-cols-3">
+      {fileGroups.map((group) => (
+        <div
+          className="rounded-md border border-slate-200 bg-slate-50 p-4"
+          key={group.label}
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            {group.label}
+          </p>
+          {group.fileNames.length === 0 ? (
+            <p className="mt-2 text-sm font-bold leading-6 text-slate-950">
+              {REVIEW_CONFIRM_COPY.notProvided}
+            </p>
+          ) : (
+            <ul className="mt-3 grid gap-2">
+              {group.fileNames.map((fileName) => (
+                <li
+                  className="break-all rounded-md border border-emerald-100 bg-white px-3 py-2 text-sm font-semibold text-slate-800"
+                  key={fileName}
+                >
+                  {fileName}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
