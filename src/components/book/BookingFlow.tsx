@@ -19,12 +19,15 @@ import type {
   ExporterDetails,
   ExporterDetailsErrors,
   ExporterDetailsField,
+  ExporterDetailsTouchedFields,
   ImporterDetails,
   ImporterDetailsErrors,
   ImporterDetailsField,
+  ImporterDetailsTouchedFields,
   ProductOrderDetails,
   ProductOrderDetailsErrors,
   ProductOrderDetailsField,
+  ProductOrderDetailsTouchedFields,
   ReviewConfirmationKey,
   ReviewConfirmations,
   SupportingFileCategory,
@@ -91,11 +94,17 @@ export function BookingFlow() {
   const [importerDetails, setImporterDetails] = useState<ImporterDetails>(
     EMPTY_IMPORTER_DETAILS,
   );
+  const [touchedImporterFields, setTouchedImporterFields] =
+    useState<ImporterDetailsTouchedFields>({});
   const [exporterDetails, setExporterDetails] = useState<ExporterDetails>(
     EMPTY_EXPORTER_DETAILS,
   );
+  const [touchedExporterFields, setTouchedExporterFields] =
+    useState<ExporterDetailsTouchedFields>({});
   const [productOrderDetails, setProductOrderDetails] =
     useState<ProductOrderDetails>(EMPTY_PRODUCT_ORDER_DETAILS);
+  const [touchedProductOrderFields, setTouchedProductOrderFields] =
+    useState<ProductOrderDetailsTouchedFields>({});
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<readonly string[]>(
     [],
   );
@@ -122,6 +131,18 @@ export function BookingFlow() {
     isExporterUnavailableState,
   );
   const productOrderErrors = validateProductOrderDetails(productOrderDetails);
+  const visibleImporterErrors = getVisibleErrors(
+    importerErrors,
+    touchedImporterFields,
+  );
+  const visibleExporterErrors = getVisibleErrors(
+    exporterErrors,
+    touchedExporterFields,
+  );
+  const visibleProductOrderErrors = getVisibleErrors(
+    productOrderErrors,
+    touchedProductOrderFields,
+  );
   const quotePricing = calculateVerificationPrice({
     exporterState: exporterDetails.state,
     importValueGbp: Number(productOrderDetails.importValueGbp),
@@ -166,6 +187,13 @@ export function BookingFlow() {
     }
   }
 
+  function handleImporterDetailsBlur(field: ImporterDetailsField) {
+    setTouchedImporterFields((currentFields) => ({
+      ...currentFields,
+      [field]: true,
+    }));
+  }
+
   function handleExporterDetailsChange(
     field: ExporterDetailsField,
     value: string,
@@ -175,6 +203,20 @@ export function BookingFlow() {
       [field]: value,
     }));
     setFlowMessage("");
+
+    if (field === "state") {
+      setTouchedExporterFields((currentFields) => ({
+        ...currentFields,
+        city: false,
+      }));
+    }
+  }
+
+  function handleExporterDetailsBlur(field: ExporterDetailsField) {
+    setTouchedExporterFields((currentFields) => ({
+      ...currentFields,
+      [field]: true,
+    }));
   }
 
   function handleProductOrderDetailsChange(
@@ -186,6 +228,15 @@ export function BookingFlow() {
       [field]: value,
     }));
     setFlowMessage("");
+  }
+
+  function handleProductOrderDetailsBlur(
+    field: ProductOrderDetailsField | "checklistItems",
+  ) {
+    setTouchedProductOrderFields((currentFields) => ({
+      ...currentFields,
+      [field]: true,
+    }));
   }
 
   function handleChecklistItemToggle(item: string) {
@@ -378,7 +429,8 @@ export function BookingFlow() {
             {activeStep === 2 && (
               <ImporterDetailsForm
                 details={importerDetails}
-                errors={importerErrors}
+                errors={visibleImporterErrors}
+                onBlur={handleImporterDetailsBlur}
                 onChange={handleImporterDetailsChange}
               />
             )}
@@ -397,8 +449,9 @@ export function BookingFlow() {
             {activeStep === 4 && (
               <ExporterDetailsForm
                 details={exporterDetails}
-                errors={exporterErrors}
+                errors={visibleExporterErrors}
                 isUnavailableState={isExporterUnavailableState}
+                onBlur={handleExporterDetailsBlur}
                 onChange={handleExporterDetailsChange}
               />
             )}
@@ -406,7 +459,8 @@ export function BookingFlow() {
             {activeStep === 5 && (
               <ProductOrderDetailsForm
                 details={productOrderDetails}
-                errors={productOrderErrors}
+                errors={visibleProductOrderErrors}
+                onBlur={handleProductOrderDetailsBlur}
                 onChange={handleProductOrderDetailsChange}
                 onToggleChecklistItem={handleChecklistItemToggle}
               />
@@ -579,6 +633,21 @@ function isUnavailableExporterState(state: string) {
     state === OTHER_STATE_OPTION ||
     !AVAILABLE_REGIONS.some((region) => region.state === state)
   );
+}
+
+function getVisibleErrors<TField extends string>(
+  errors: Partial<Record<TField, string>>,
+  touchedFields: Partial<Record<TField, boolean>>,
+) {
+  const visibleErrors: Partial<Record<TField, string>> = {};
+
+  for (const field of Object.keys(errors) as TField[]) {
+    if (touchedFields[field]) {
+      visibleErrors[field] = errors[field];
+    }
+  }
+
+  return visibleErrors;
 }
 
 function getStepRequirementMessage(activeStep: ActiveBookingStep) {

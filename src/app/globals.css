@@ -64,13 +64,14 @@ a {
 }
 
 .hero-plane {
-  transform: rotateX(62deg) rotateZ(-18deg);
+  opacity: 0.72;
+  transform: translateZ(-80px) rotateX(62deg) rotateZ(-18deg) scale(0.92);
   transform-origin: center;
   transition: transform 500ms ease;
 }
 
 .hero-scene:hover .hero-plane {
-  transform: rotateX(58deg) rotateZ(-15deg) translateY(-8px);
+  transform: translateZ(-80px) rotateX(58deg) rotateZ(-15deg) translateY(-8px) scale(0.92);
 }
 
 .hero-card {

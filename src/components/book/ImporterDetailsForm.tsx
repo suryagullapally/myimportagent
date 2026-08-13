@@ -8,12 +8,14 @@ import type {
 type ImporterDetailsFormProps = Readonly<{
   details: ImporterDetails;
   errors: ImporterDetailsErrors;
+  onBlur: (field: ImporterDetailsField) => void;
   onChange: (field: ImporterDetailsField, value: string) => void;
 }>;
 
 export function ImporterDetailsForm({
   details,
   errors,
+  onBlur,
   onChange,
 }: ImporterDetailsFormProps) {
   return (
@@ -38,6 +40,7 @@ export function ImporterDetailsForm({
           error={errors.fullName}
           id="importer-full-name"
           label={IMPORTER_DETAILS_COPY.fullNameLabel}
+          onBlur={() => onBlur("fullName")}
           onChange={(value) => onChange("fullName", value)}
           placeholder={IMPORTER_DETAILS_COPY.fullNamePlaceholder}
           value={details.fullName}
@@ -46,6 +49,7 @@ export function ImporterDetailsForm({
           hint={IMPORTER_DETAILS_COPY.companyNameHint}
           id="importer-company-name"
           label={IMPORTER_DETAILS_COPY.companyNameLabel}
+          onBlur={() => onBlur("companyName")}
           onChange={(value) => onChange("companyName", value)}
           placeholder={IMPORTER_DETAILS_COPY.companyNamePlaceholder}
           value={details.companyName}
@@ -54,6 +58,7 @@ export function ImporterDetailsForm({
           error={errors.country}
           id="importer-country"
           label={IMPORTER_DETAILS_COPY.countryLabel}
+          onBlur={() => onBlur("country")}
           onChange={(value) => onChange("country", value)}
           placeholder={IMPORTER_DETAILS_COPY.countryPlaceholder}
           value={details.country}
@@ -62,6 +67,7 @@ export function ImporterDetailsForm({
           error={errors.phone}
           id="importer-phone"
           label={IMPORTER_DETAILS_COPY.phoneLabel}
+          onBlur={() => onBlur("phone")}
           onChange={(value) => onChange("phone", value)}
           placeholder={IMPORTER_DETAILS_COPY.phonePlaceholder}
           type="tel"
@@ -72,6 +78,7 @@ export function ImporterDetailsForm({
             error={errors.email}
             id="importer-email"
             label={IMPORTER_DETAILS_COPY.emailLabel}
+            onBlur={() => onBlur("email")}
             onChange={(value) => onChange("email", value)}
             placeholder={IMPORTER_DETAILS_COPY.emailPlaceholder}
             type="email"
@@ -88,6 +95,7 @@ type TextFieldProps = Readonly<{
   hint?: string;
   id: string;
   label: string;
+  onBlur: () => void;
   onChange: (value: string) => void;
   placeholder: string;
   type?: string;
@@ -99,6 +107,7 @@ function TextField({
   hint,
   id,
   label,
+  onBlur,
   onChange,
   placeholder,
   type = "text",
@@ -118,6 +127,7 @@ function TextField({
             : "border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
         }`}
         id={id}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         type={type}

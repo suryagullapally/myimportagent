@@ -22,7 +22,7 @@ export default function HowItWorksPage() {
       />
 
       <MarketingSection
-        description="A step-by-step path keeps the request clear for the customer, the future backend, and the local verification agent."
+        description="A step-by-step path keeps the request clear for the customer and the local verification agent."
         eyebrow="Customer journey"
         title="From availability check to evidence review."
       >

@@ -76,7 +76,7 @@ export function AvailabilityChecker() {
   return (
     <section
       aria-labelledby="availability-title"
-      className="bg-surface px-6 py-20 sm:px-8 lg:px-10"
+      className="scroll-mt-28 bg-surface px-6 py-20 sm:px-8 lg:px-10"
       id="availability"
     >
       <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">

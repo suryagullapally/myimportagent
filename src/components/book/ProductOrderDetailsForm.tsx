@@ -13,6 +13,7 @@ import type {
 type ProductOrderDetailsFormProps = Readonly<{
   details: ProductOrderDetails;
   errors: ProductOrderDetailsErrors;
+  onBlur: (field: ProductOrderDetailsField | "checklistItems") => void;
   onChange: (field: ProductOrderDetailsField, value: string) => void;
   onToggleChecklistItem: (item: string) => void;
 }>;
@@ -20,6 +21,7 @@ type ProductOrderDetailsFormProps = Readonly<{
 export function ProductOrderDetailsForm({
   details,
   errors,
+  onBlur,
   onChange,
   onToggleChecklistItem,
 }: ProductOrderDetailsFormProps) {
@@ -45,6 +47,7 @@ export function ProductOrderDetailsForm({
           error={errors.productCategory}
           id="product-category"
           label={PRODUCT_ORDER_DETAILS_COPY.productCategoryLabel}
+          onBlur={() => onBlur("productCategory")}
           onChange={(value) => onChange("productCategory", value)}
           placeholder={PRODUCT_ORDER_DETAILS_COPY.productCategoryPlaceholder}
           value={details.productCategory}
@@ -53,6 +56,7 @@ export function ProductOrderDetailsForm({
           error={errors.quantity}
           id="product-quantity"
           label={PRODUCT_ORDER_DETAILS_COPY.quantityLabel}
+          onBlur={() => onBlur("quantity")}
           onChange={(value) => onChange("quantity", value)}
           placeholder={PRODUCT_ORDER_DETAILS_COPY.quantityPlaceholder}
           value={details.quantity}
@@ -61,6 +65,7 @@ export function ProductOrderDetailsForm({
           error={errors.importValueGbp}
           id="product-import-value"
           label={PRODUCT_ORDER_DETAILS_COPY.importValueLabel}
+          onBlur={() => onBlur("importValueGbp")}
           onChange={(value) => onChange("importValueGbp", value)}
           placeholder={PRODUCT_ORDER_DETAILS_COPY.importValuePlaceholder}
           type="number"
@@ -90,6 +95,7 @@ export function ProductOrderDetailsForm({
             error={errors.productDescription}
             id="product-description"
             label={PRODUCT_ORDER_DETAILS_COPY.productDescriptionLabel}
+            onBlur={() => onBlur("productDescription")}
             onChange={(value) => onChange("productDescription", value)}
             placeholder={PRODUCT_ORDER_DETAILS_COPY.productDescriptionPlaceholder}
             value={details.productDescription}
@@ -99,6 +105,7 @@ export function ProductOrderDetailsForm({
           hint={PRODUCT_ORDER_DETAILS_COPY.expectedDateHint}
           id="expected-verification-date"
           label={PRODUCT_ORDER_DETAILS_COPY.expectedDateLabel}
+          onBlur={() => onBlur("expectedVerificationDate")}
           onChange={(value) => onChange("expectedVerificationDate", value)}
           placeholder={PRODUCT_ORDER_DETAILS_COPY.expectedDatePlaceholder}
           value={details.expectedVerificationDate}
@@ -107,6 +114,7 @@ export function ProductOrderDetailsForm({
           <TextAreaField
             id="special-instructions"
             label={PRODUCT_ORDER_DETAILS_COPY.specialInstructionsLabel}
+            onBlur={() => onBlur("specialInstructions")}
             onChange={(value) => onChange("specialInstructions", value)}
             placeholder={PRODUCT_ORDER_DETAILS_COPY.specialInstructionsPlaceholder}
             value={details.specialInstructions}
@@ -134,7 +142,10 @@ export function ProductOrderDetailsForm({
                 <input
                   checked={isChecked}
                   className="mt-1 h-4 w-4 accent-emerald-600"
-                  onChange={() => onToggleChecklistItem(item)}
+                  onChange={() => {
+                    onBlur("checklistItems");
+                    onToggleChecklistItem(item);
+                  }}
                   type="checkbox"
                 />
                 <span>{item}</span>
@@ -157,6 +168,7 @@ type TextFieldProps = Readonly<{
   hint?: string;
   id: string;
   label: string;
+  onBlur: () => void;
   onChange: (value: string) => void;
   placeholder: string;
   type?: string;
@@ -168,6 +180,7 @@ function TextField({
   hint,
   id,
   label,
+  onBlur,
   onChange,
   placeholder,
   type = "text",
@@ -187,6 +200,7 @@ function TextField({
             : "border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
         }`}
         id={id}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         type={type}
@@ -201,6 +215,7 @@ type TextAreaFieldProps = Readonly<{
   error?: string;
   id: string;
   label: string;
+  onBlur: () => void;
   onChange: (value: string) => void;
   placeholder: string;
   value: string;
@@ -210,6 +225,7 @@ function TextAreaField({
   error,
   id,
   label,
+  onBlur,
   onChange,
   placeholder,
   value,
@@ -225,6 +241,7 @@ function TextAreaField({
             : "border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
         }`}
         id={id}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         value={value}

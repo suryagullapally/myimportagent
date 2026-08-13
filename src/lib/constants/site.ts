@@ -41,13 +41,13 @@ export const SECTION_COPY = {
     eyebrow: "Verification packages",
     title: "Choose the check that matches your buying risk.",
     description:
-      "Focused packages keep the service easy to understand now and easy to connect to a backend later.",
+      "Focused packages keep the service easy to understand and proceed.",
   },
   whyVerify: {
     eyebrow: "Why verify",
     title: "Make import decisions with better evidence.",
     description:
-      "Use local checks to reduce uncertainty before balance payment, shipment handover, or order finalisation.",
+      "Use local checks to reduce uncertainty before payment, shipment handover, or order finalisation.",
   },
 };
 
@@ -105,7 +105,7 @@ export const WHY_VERIFY_BENEFITS: Benefit[] = [
     description: "Use local evidence before relying only on remote promises.",
   },
   {
-    title: "Check before balance payment",
+    title: "Check before payment",
     description: "Add a verification step before releasing important funds.",
   },
   {
@@ -125,7 +125,7 @@ export const WHY_VERIFY_BENEFITS: Benefit[] = [
 export const TRUST_COPY = {
   title: "Verification support without logistics confusion.",
   statement:
-    "myimportagent provides physical verification and evidence collection based on your instructions. You stay in control of your import decision.",
+    "MyImportAgent provides physical verification and evidence collection based on your instructions. You stay in control of your import decision.",
   exclusion:
     "We do not provide freight forwarding, customs clearance, insurance, or logistics services.",
 };
@@ -142,7 +142,7 @@ export const HOW_IT_WORKS_PAGE = {
   eyebrow: "How it works",
   title: "A careful verification journey before you pay or ship.",
   description:
-    "myimportagent helps overseas importers request local evidence from India before making important import decisions.",
+    "MyImportAgent helps overseas importers request local evidence from India before making important import decisions.",
   steps: [
     {
       title: "Check availability",
@@ -167,10 +167,10 @@ export const HOW_IT_WORKS_PAGE = {
     {
       title: "Get estimated price",
       description:
-        "Review the frontend estimate based on exporter state, import value, and selected add-ons.",
+        "Review the estimate based on exporter state, import value, and selected add-ons.",
     },
     {
-      title: "myimportagent reviews the request",
+      title: "MyImportAgent reviews the request",
       description:
         "The request can later be checked before final payment and agent assignment.",
     },
@@ -274,14 +274,14 @@ export const PACKAGES_PAGE = {
 
 export const FAQ_ITEMS = [
   {
-    question: "What does myimportagent do?",
+    question: "What does MyImportAgent do?",
     answer:
-      "myimportagent helps overseas importers arrange local verification in India before payment or shipment. The service focuses on seller, product, packing, and dispatch checks.",
+      "MyImportAgent helps overseas importers arrange local verification in India before payment or shipment. The service focuses on seller, product, packing, and dispatch checks.",
   },
   {
     question: "Are you a logistics company?",
     answer:
-      "No. myimportagent is a verification-only service. We collect evidence based on your instructions; we do not move goods.",
+      "No. MyImportAgent is a verification-only service. We collect evidence based on your instructions; we do not move goods.",
   },
   {
     question: "Do you ship goods?",
@@ -338,7 +338,7 @@ export const FAQ_ITEMS = [
 
 export const CONTACT_PAGE = {
   eyebrow: "Contact",
-  title: "Talk to myimportagent about verification before you pay.",
+  title: "Talk to MyImportAgent about verification before you pay.",
   description:
     "Use this frontend-only contact form for general questions. Booking requests should start from the booking flow when you are ready.",
   email: "hello@myimportagent.com",

@@ -26,6 +26,10 @@ export type ImporterDetailsErrors = Partial<
   Record<ImporterDetailsField, string>
 >;
 
+export type ImporterDetailsTouchedFields = Partial<
+  Record<ImporterDetailsField, boolean>
+>;
+
 export type ExporterDetails = Readonly<{
   businessName: string;
   contactPerson: string;
@@ -43,6 +47,10 @@ export type ExporterDetailsField = keyof ExporterDetails;
 
 export type ExporterDetailsErrors = Partial<
   Record<ExporterDetailsField | "stateAvailability", string>
+>;
+
+export type ExporterDetailsTouchedFields = Partial<
+  Record<ExporterDetailsField | "stateAvailability", boolean>
 >;
 
 export type PaymentStatus = "not-paid" | "advance-paid" | "fully-paid";
@@ -65,6 +73,10 @@ export type ProductOrderDetailsField = keyof Omit<
 
 export type ProductOrderDetailsErrors = Partial<
   Record<ProductOrderDetailsField | "checklistItems", string>
+>;
+
+export type ProductOrderDetailsTouchedFields = Partial<
+  Record<ProductOrderDetailsField | "checklistItems", boolean>
 >;
 
 export type SupportingFileCategory =

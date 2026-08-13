@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui";
 import { FINAL_CTA_COPY } from "@/lib/constants";
+import { HomeCtaButtons } from "./HomeCtaButtons";
 
 export function CTASection() {
   return (
@@ -14,8 +14,10 @@ export function CTASection() {
           </p>
         </div>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Button>{FINAL_CTA_COPY.primaryCta}</Button>
-          <Button variant="outline">{FINAL_CTA_COPY.secondaryCta}</Button>
+          <HomeCtaButtons
+            primaryLabel={FINAL_CTA_COPY.primaryCta}
+            secondaryLabel={FINAL_CTA_COPY.secondaryCta}
+          />
         </div>
       </div>
     </section>

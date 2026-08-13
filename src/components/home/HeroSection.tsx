@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui";
 import { HERO_TRUST_POINTS, HOME_PAGE_COPY } from "@/lib/constants";
 import { Hero3DVisual } from "./Hero3DVisual";
+import { HomeCtaButtons } from "./HomeCtaButtons";
 
 export function HeroSection() {
   return (
@@ -27,8 +27,10 @@ export function HeroSection() {
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button>{HOME_PAGE_COPY.primaryCta}</Button>
-            <Button variant="outline">{HOME_PAGE_COPY.secondaryCta}</Button>
+            <HomeCtaButtons
+              primaryLabel={HOME_PAGE_COPY.primaryCta}
+              secondaryLabel={HOME_PAGE_COPY.secondaryCta}
+            />
           </div>
 
           <p className="mt-6 text-sm font-medium text-emerald-100">

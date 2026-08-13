@@ -14,6 +14,7 @@ type ExporterDetailsFormProps = Readonly<{
   details: ExporterDetails;
   errors: ExporterDetailsErrors;
   isUnavailableState: boolean;
+  onBlur: (field: ExporterDetailsField) => void;
   onChange: (field: ExporterDetailsField, value: string) => void;
 }>;
 
@@ -21,6 +22,7 @@ export function ExporterDetailsForm({
   details,
   errors,
   isUnavailableState,
+  onBlur,
   onChange,
 }: ExporterDetailsFormProps) {
   const selectedRegion = AVAILABLE_REGIONS.find(
@@ -51,6 +53,7 @@ export function ExporterDetailsForm({
           error={errors.businessName}
           id="exporter-business-name"
           label={EXPORTER_DETAILS_COPY.businessNameLabel}
+          onBlur={() => onBlur("businessName")}
           onChange={(value) => onChange("businessName", value)}
           placeholder={EXPORTER_DETAILS_COPY.businessNamePlaceholder}
           value={details.businessName}
@@ -59,6 +62,7 @@ export function ExporterDetailsForm({
           hint={EXPORTER_DETAILS_COPY.contactPersonHint}
           id="exporter-contact-person"
           label={EXPORTER_DETAILS_COPY.contactPersonLabel}
+          onBlur={() => onBlur("contactPerson")}
           onChange={(value) => onChange("contactPerson", value)}
           placeholder={EXPORTER_DETAILS_COPY.contactPersonPlaceholder}
           value={details.contactPerson}
@@ -67,6 +71,7 @@ export function ExporterDetailsForm({
           error={errors.phone}
           id="exporter-phone"
           label={EXPORTER_DETAILS_COPY.phoneLabel}
+          onBlur={() => onBlur("phone")}
           onChange={(value) => onChange("phone", value)}
           placeholder={EXPORTER_DETAILS_COPY.phonePlaceholder}
           type="tel"
@@ -76,6 +81,7 @@ export function ExporterDetailsForm({
           hint={EXPORTER_DETAILS_COPY.emailHint}
           id="exporter-email"
           label={EXPORTER_DETAILS_COPY.emailLabel}
+          onBlur={() => onBlur("email")}
           onChange={(value) => onChange("email", value)}
           placeholder={EXPORTER_DETAILS_COPY.emailPlaceholder}
           type="email"
@@ -86,6 +92,7 @@ export function ExporterDetailsForm({
             error={errors.fullAddress}
             id="exporter-full-address"
             label={EXPORTER_DETAILS_COPY.fullAddressLabel}
+            onBlur={() => onBlur("fullAddress")}
             onChange={(value) => onChange("fullAddress", value)}
             placeholder={EXPORTER_DETAILS_COPY.fullAddressPlaceholder}
             value={details.fullAddress}
@@ -95,6 +102,7 @@ export function ExporterDetailsForm({
           error={errors.state}
           id="exporter-state"
           label={EXPORTER_DETAILS_COPY.stateLabel}
+          onBlur={() => onBlur("state")}
           onChange={(value) => {
             onChange("state", value);
             onChange("city", "");
@@ -113,6 +121,7 @@ export function ExporterDetailsForm({
           error={errors.city}
           id="exporter-city"
           label={EXPORTER_DETAILS_COPY.cityLabel}
+          onBlur={() => onBlur("city")}
           onChange={(value) => onChange("city", value)}
           placeholder={
             isUnavailableState
@@ -131,6 +140,7 @@ export function ExporterDetailsForm({
           hint={EXPORTER_DETAILS_COPY.googleMapsHint}
           id="exporter-google-maps"
           label={EXPORTER_DETAILS_COPY.googleMapsLabel}
+          onBlur={() => onBlur("googleMapsLink")}
           onChange={(value) => onChange("googleMapsLink", value)}
           placeholder={EXPORTER_DETAILS_COPY.googleMapsPlaceholder}
           type="url"
@@ -140,6 +150,7 @@ export function ExporterDetailsForm({
           hint={EXPORTER_DETAILS_COPY.gstNumberHint}
           id="exporter-gst-number"
           label={EXPORTER_DETAILS_COPY.gstNumberLabel}
+          onBlur={() => onBlur("gstNumber")}
           onChange={(value) => onChange("gstNumber", value)}
           placeholder={EXPORTER_DETAILS_COPY.gstNumberPlaceholder}
           value={details.gstNumber}
@@ -149,6 +160,7 @@ export function ExporterDetailsForm({
             hint={EXPORTER_DETAILS_COPY.profileLinkHint}
             id="exporter-profile-link"
             label={EXPORTER_DETAILS_COPY.profileLinkLabel}
+            onBlur={() => onBlur("profileLink")}
             onChange={(value) => onChange("profileLink", value)}
             placeholder={EXPORTER_DETAILS_COPY.profileLinkPlaceholder}
             type="url"
@@ -183,6 +195,7 @@ type TextFieldProps = Readonly<{
   hint?: string;
   id: string;
   label: string;
+  onBlur: () => void;
   onChange: (value: string) => void;
   placeholder: string;
   type?: string;
@@ -194,6 +207,7 @@ function TextField({
   hint,
   id,
   label,
+  onBlur,
   onChange,
   placeholder,
   type = "text",
@@ -213,6 +227,7 @@ function TextField({
             : "border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
         }`}
         id={id}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         type={type}
@@ -227,6 +242,7 @@ type TextAreaFieldProps = Readonly<{
   error?: string;
   id: string;
   label: string;
+  onBlur: () => void;
   onChange: (value: string) => void;
   placeholder: string;
   value: string;
@@ -236,6 +252,7 @@ function TextAreaField({
   error,
   id,
   label,
+  onBlur,
   onChange,
   placeholder,
   value,
@@ -251,6 +268,7 @@ function TextAreaField({
             : "border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
         }`}
         id={id}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         value={value}
@@ -266,6 +284,7 @@ type SelectFieldProps = Readonly<{
   error?: string;
   id: string;
   label: string;
+  onBlur: () => void;
   onChange: (value: string) => void;
   placeholder: string;
   value: string;
@@ -277,6 +296,7 @@ function SelectField({
   error,
   id,
   label,
+  onBlur,
   onChange,
   placeholder,
   value,
@@ -293,6 +313,7 @@ function SelectField({
         }`}
         disabled={disabled}
         id={id}
+        onBlur={onBlur}
         onChange={(event) => onChange(event.target.value)}
         value={value}
       >
