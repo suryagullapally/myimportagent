@@ -22,6 +22,27 @@ export type Benefit = Readonly<{
 
 export type { AvailabilityRegion, AvailabilityResult } from "./availability";
 export type {
+  AdminAgent,
+  AdminAgentStatus,
+  AdminBooking,
+  AdminBookingStatus,
+  AdminExporterDetails,
+  AdminImporterDetails,
+  AdminPaymentStatus,
+  AdminProductOrderDetails,
+  AdminQuoteSummary,
+} from "./admin";
+export type {
+  AgentAvailabilityStatus,
+  AgentEvidenceCategory,
+  AgentEvidenceFiles,
+  AgentJob,
+  AgentJobExporter,
+  AgentJobInstructions,
+  AgentJobStatus,
+  VisitResult,
+} from "./agent";
+export type {
   ActiveBookingStep,
   BookingPackage,
   BookingStep,
