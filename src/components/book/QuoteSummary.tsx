@@ -1,13 +1,19 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 import {
   PACKAGE_PRICE_ADJUSTMENTS_GBP,
   PRICING_ADD_ONS,
   QUOTE_SUMMARY_COPY,
 } from "@/lib/constants";
-import { calculateVerificationPrice, formatGbp } from "@/lib/utils";
+import {
+  getPricingQuote,
+  type PricingQuoteResponse,
+} from "@/lib/api/pricing";
+import { formatGbp } from "@/lib/utils";
 import type {
   BookingPackage,
   ExporterDetails,
-  PricingResult,
   ProductOrderDetails,
 } from "@/types";
 
@@ -26,17 +32,78 @@ export function QuoteSummary({
   selectedPackage,
   onToggleAddOn,
 }: QuoteSummaryProps) {
+  const [backendQuote, setBackendQuote] = useState<PricingQuoteResponse | null>(
+    null,
+  );
+  const [isQuoteLoading, setIsQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState("");
+
   const importValue = Number(productOrderDetails.importValueGbp);
-  const pricing = calculateVerificationPrice({
-    exporterState: exporterDetails.state,
-    importValueGbp: Number.isFinite(importValue) ? importValue : 0,
-    selectedAddOnIds,
-  });
+
   const selectedAddOns = PRICING_ADD_ONS.filter((addOn) =>
     selectedAddOnIds.includes(addOn.id),
   );
+
   const selectedPackageAdjustment =
     selectedPackage && PACKAGE_PRICE_ADJUSTMENTS_GBP[selectedPackage.id];
+
+  const pricingRequest = useMemo(() => {
+    if (
+      !exporterDetails.state ||
+      !Number.isFinite(importValue) ||
+      importValue <= 0
+    ) {
+      return null;
+    }
+
+    return {
+      state: exporterDetails.state,
+      importValueGbp: importValue,
+      addOnIds: [...selectedAddOnIds],
+    };
+  }, [exporterDetails.state, importValue, selectedAddOnIds]);
+
+  useEffect(() => {
+    let shouldIgnoreResponse = false;
+
+    async function loadBackendQuote() {
+      if (!pricingRequest) {
+        setBackendQuote(null);
+        setQuoteError("Exporter state and valid import value are required.");
+        return;
+      }
+
+      try {
+        setIsQuoteLoading(true);
+        setQuoteError("");
+
+        const quote = await getPricingQuote(pricingRequest);
+
+        if (!shouldIgnoreResponse) {
+          setBackendQuote(quote);
+        }
+      } catch (error) {
+        if (!shouldIgnoreResponse) {
+          setBackendQuote(null);
+          setQuoteError(
+            error instanceof Error
+              ? error.message
+              : QUOTE_SUMMARY_COPY.backendErrorMessage,
+          );
+        }
+      } finally {
+        if (!shouldIgnoreResponse) {
+          setIsQuoteLoading(false);
+        }
+      }
+    }
+
+    loadBackendQuote();
+
+    return () => {
+      shouldIgnoreResponse = true;
+    };
+  }, [pricingRequest]);
 
   return (
     <section aria-labelledby="quote-summary-title">
@@ -122,12 +189,16 @@ export function QuoteSummary({
           </fieldset>
         </div>
 
-        <QuoteBreakdown pricing={pricing} selectedAddOns={selectedAddOns} />
+        <QuoteBreakdown
+          backendQuote={backendQuote}
+          isQuoteLoading={isQuoteLoading}
+          quoteError={quoteError}
+        />
       </div>
 
       <div className="mt-6 rounded-lg border border-sky-200 bg-sky-50 p-4">
         <p className="text-sm font-semibold leading-6 text-sky-900">
-          {QUOTE_SUMMARY_COPY.note}
+          {backendQuote?.note ?? QUOTE_SUMMARY_COPY.note}
         </p>
       </div>
     </section>
@@ -151,57 +222,67 @@ function SummaryItem({ label, value }: SummaryItemProps) {
 }
 
 type QuoteBreakdownProps = Readonly<{
-  pricing: PricingResult;
-  selectedAddOns: readonly {
-    id: string;
-    title: string;
-    priceGbp: number;
-  }[];
+  backendQuote: PricingQuoteResponse | null;
+  isQuoteLoading: boolean;
+  quoteError: string;
 }>;
 
-function QuoteBreakdown({ pricing, selectedAddOns }: QuoteBreakdownProps) {
-  if (pricing.finalPrice === null || pricing.basePrice === null) {
+function QuoteBreakdown({
+  backendQuote,
+  isQuoteLoading,
+  quoteError,
+}: QuoteBreakdownProps) {
+  if (isQuoteLoading) {
     return (
-      <aside className="rounded-lg border border-amber-200 bg-amber-50 p-5 shadow-sm">
-        <p className="text-sm font-bold text-amber-900">
-          {QUOTE_SUMMARY_COPY.unavailablePricingMessage}
+      <aside className="rounded-lg border border-sky-200 bg-sky-50 p-5 shadow-sm">
+        <p className="text-sm font-bold text-sky-900">
+          {QUOTE_SUMMARY_COPY.backendLoadingMessage}
+        </p>
+        <p className="mt-2 text-sm leading-6 text-sky-700">
+          The frontend is asking the Java Spring Boot API to calculate the
+          trusted quote.
         </p>
       </aside>
     );
   }
 
-  const baseReason =
-    pricing.selectedBaseReason === "state-minimum"
-      ? QUOTE_SUMMARY_COPY.stateMinimumReason
-      : QUOTE_SUMMARY_COPY.onePercentReason;
+  if (quoteError || !backendQuote) {
+    return (
+      <aside className="rounded-lg border border-amber-200 bg-amber-50 p-5 shadow-sm">
+        <p className="text-sm font-bold text-amber-900">
+          {quoteError || QUOTE_SUMMARY_COPY.unavailablePricingMessage}
+        </p>
+      </aside>
+    );
+  }
 
   return (
     <aside className="rounded-lg border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-xl shadow-emerald-950/5">
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">
-        Estimated quote
+        Backend verified estimate
       </p>
       <p className="mt-4 text-4xl font-bold text-slate-950">
-        {formatGbp(pricing.finalPrice)}
+        {formatGbp(backendQuote.finalEstimatedPriceGbp)}
       </p>
       <p className="mt-2 text-sm leading-6 text-slate-600">
-        Includes base price plus selected add-ons.
+        Calculated by the Spring Boot pricing API.
       </p>
 
       <div className="mt-6 space-y-3 text-sm">
         <BreakdownRow
           label={QUOTE_SUMMARY_COPY.stateMinimumLabel}
-          value={formatGbp(pricing.stateMinimumFee ?? 0)}
+          value={formatGbp(backendQuote.stateMinimumFeeGbp)}
         />
         <BreakdownRow
           label={QUOTE_SUMMARY_COPY.onePercentLabel}
-          value={formatGbp(pricing.onePercentValue)}
+          value={formatGbp(backendQuote.onePercentValueGbp)}
         />
         <BreakdownRow
           label={QUOTE_SUMMARY_COPY.basePriceLabel}
-          value={formatGbp(pricing.basePrice)}
+          value={formatGbp(backendQuote.selectedBasePriceGbp)}
         />
         <p className="rounded-md bg-white p-3 text-xs font-semibold leading-5 text-slate-600">
-          {baseReason}
+          {backendQuote.basePriceReason}
         </p>
       </div>
 
@@ -209,18 +290,18 @@ function QuoteBreakdown({ pricing, selectedAddOns }: QuoteBreakdownProps) {
         <p className="text-sm font-bold text-slate-950">
           {QUOTE_SUMMARY_COPY.addOnsLabel}
         </p>
-        {selectedAddOns.length === 0 ? (
+        {backendQuote.selectedAddOns.length === 0 ? (
           <p className="mt-2 text-sm text-slate-600">
             {QUOTE_SUMMARY_COPY.noAddOnsLabel}
           </p>
         ) : (
           <ul className="mt-3 space-y-2">
-            {selectedAddOns.map((addOn) => (
+            {backendQuote.selectedAddOns.map((addOn) => (
               <li
                 className="flex items-center justify-between gap-3 text-sm text-slate-700"
                 key={addOn.id}
               >
-                <span>{addOn.title}</span>
+                <span>{addOn.name}</span>
                 <span className="font-bold">{formatGbp(addOn.priceGbp)}</span>
               </li>
             ))}
@@ -229,7 +310,7 @@ function QuoteBreakdown({ pricing, selectedAddOns }: QuoteBreakdownProps) {
         <BreakdownRow
           className="mt-4"
           label={QUOTE_SUMMARY_COPY.addOnsTotalLabel}
-          value={formatGbp(pricing.addOnsTotal)}
+          value={formatGbp(backendQuote.addOnsTotalGbp)}
         />
       </div>
 
@@ -238,7 +319,7 @@ function QuoteBreakdown({ pricing, selectedAddOns }: QuoteBreakdownProps) {
           {QUOTE_SUMMARY_COPY.finalPriceLabel}
         </p>
         <p className="mt-1 text-2xl font-bold">
-          {formatGbp(pricing.finalPrice)}
+          {formatGbp(backendQuote.finalEstimatedPriceGbp)}
         </p>
       </div>
     </aside>

@@ -1,32 +1,73 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/ui";
 import {
-  AVAILABILITY_CHECKER_COPY,
-  AVAILABLE_REGIONS,
-  OTHER_STATE_OPTION,
-  STATE_OPTIONS,
-} from "@/lib/constants";
-import type { AvailabilityResult } from "@/types";
+  checkAvailability,
+  getAvailabilityRegions,
+  type AvailabilityCheckResponse,
+  type AvailabilityRegion,
+} from "@/lib/api/availability";
+import { AVAILABILITY_CHECKER_COPY, OTHER_STATE_OPTION } from "@/lib/constants";
+
+type AvailabilityUiResult = {
+  type: "available" | "unavailable" | "validation" | "error";
+  message: string;
+  state?: string;
+  city?: string;
+};
 
 export function AvailabilityChecker() {
+  const [regions, setRegions] = useState<AvailabilityRegion[]>([]);
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
-  const [result, setResult] = useState<AvailabilityResult>(null);
+  const [result, setResult] = useState<AvailabilityUiResult | null>(null);
+  const [isLoadingRegions, setIsLoadingRegions] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
+
+  useEffect(() => {
+    async function loadAvailabilityRegions() {
+      try {
+        setIsLoadingRegions(true);
+        setResult(null);
+
+        const data = await getAvailabilityRegions();
+        setRegions(data);
+      } catch {
+        setResult({
+          type: "error",
+          message:
+            "Could not load availability locations from the backend. Please make sure the Spring Boot server is running.",
+        });
+      } finally {
+        setIsLoadingRegions(false);
+      }
+    }
+
+    loadAvailabilityRegions();
+  }, []);
+
+  const stateOptions = useMemo(() => {
+    const availableStates = regions.map((region) => region.state);
+
+    return [...availableStates, OTHER_STATE_OPTION];
+  }, [regions]);
 
   const selectedRegion = useMemo(
-    () => AVAILABLE_REGIONS.find((region) => region.state === selectedState),
-    [selectedState],
+    () => regions.find((region) => region.state === selectedState),
+    [regions, selectedState],
   );
 
   const cityOptions = selectedRegion?.cities ?? [];
+
   const isUnavailableState =
     selectedState === OTHER_STATE_OPTION ||
     (selectedState !== "" && !selectedRegion);
-  const isCityDisabled = !selectedState || isUnavailableState;
+
+  const isCityDisabled =
+    !selectedState || isUnavailableState || isLoadingRegions || isChecking;
 
   function handleStateChange(nextState: string) {
     setSelectedState(nextState);
@@ -39,7 +80,7 @@ export function AvailabilityChecker() {
     setResult(null);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!selectedState) {
@@ -54,6 +95,7 @@ export function AvailabilityChecker() {
       setResult({
         type: "unavailable",
         message: AVAILABILITY_CHECKER_COPY.unavailableMessage,
+        state: selectedState,
       });
       return;
     }
@@ -66,11 +108,28 @@ export function AvailabilityChecker() {
       return;
     }
 
-    setResult({
-      type: "available",
-      city: selectedCity,
-      state: selectedState,
-    });
+    try {
+      setIsChecking(true);
+      setResult(null);
+
+      const availabilityResult: AvailabilityCheckResponse =
+        await checkAvailability(selectedState, selectedCity);
+
+      setResult({
+        type: availabilityResult.available ? "available" : "unavailable",
+        message: availabilityResult.message,
+        state: availabilityResult.state,
+        city: availabilityResult.city,
+      });
+    } catch {
+      setResult({
+        type: "error",
+        message:
+          "Could not check availability from the backend. Please try again.",
+      });
+    } finally {
+      setIsChecking(false);
+    }
   }
 
   return (
@@ -115,15 +174,18 @@ export function AvailabilityChecker() {
                 {AVAILABILITY_CHECKER_COPY.stateLabel}
               </span>
               <select
-                className="mt-2 h-12 w-full rounded-md border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-950 outline-none transition focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                className="mt-2 h-12 w-full rounded-md border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-950 outline-none transition disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                disabled={isLoadingRegions || isChecking}
                 id="exporter-state"
                 onChange={(event) => handleStateChange(event.target.value)}
                 value={selectedState}
               >
                 <option value="">
-                  {AVAILABILITY_CHECKER_COPY.statePlaceholder}
+                  {isLoadingRegions
+                    ? "Loading available states..."
+                    : AVAILABILITY_CHECKER_COPY.statePlaceholder}
                 </option>
-                {STATE_OPTIONS.map((state) => (
+                {stateOptions.map((state) => (
                   <option key={state} value={state}>
                     {state}
                   </option>
@@ -157,8 +219,8 @@ export function AvailabilityChecker() {
           </div>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button className="sm:min-w-48" type="submit">
-              {AVAILABILITY_CHECKER_COPY.checkButton}
+            <Button className="sm:min-w-48" disabled={isChecking} type="submit">
+              {isChecking ? "Checking..." : AVAILABILITY_CHECKER_COPY.checkButton}
             </Button>
             <p className="text-sm text-slate-500">
               Verification-only coverage check. No booking is created here.
@@ -169,8 +231,7 @@ export function AvailabilityChecker() {
             {result?.type === "available" && (
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                 <p className="text-sm font-bold text-emerald-800">
-                  {AVAILABILITY_CHECKER_COPY.availablePrefix} {result.city},{" "}
-                  {result.state}.
+                  {result.message}
                 </p>
                 <p className="mt-1 text-sm leading-6 text-emerald-700">
                   You can continue toward booking when you are ready to prepare
@@ -196,6 +257,14 @@ export function AvailabilityChecker() {
             {result?.type === "validation" && (
               <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
                 <p className="text-sm font-bold text-sky-900">
+                  {result.message}
+                </p>
+              </div>
+            )}
+
+            {result?.type === "error" && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                <p className="text-sm font-bold text-red-900">
                   {result.message}
                 </p>
               </div>

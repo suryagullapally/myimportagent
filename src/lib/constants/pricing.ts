@@ -24,19 +24,19 @@ export const IMPORT_VALUE_PERCENTAGE_RATE = 0.01;
 
 export const PRICING_ADD_ONS: readonly PricingAddOn[] = [
   {
-    id: "video-recording",
+    id: "video_recording",
     title: "Video recording of verification",
     description: "Receive a saved video clip from the verification visit.",
     priceGbp: 25,
   },
   {
-    id: "live-video-call",
+    id: "live_video_call",
     title: "Live video call during verification",
     description: "Join a scheduled live call while the agent is at the location.",
     priceGbp: 40,
   },
   {
-    id: "urgent-verification",
+    id: "urgent_verification",
     title: "Urgent verification",
     description: "Request priority scheduling when agent capacity is available.",
     priceGbp: 50,
@@ -53,7 +53,7 @@ export const QUOTE_SUMMARY_COPY = {
   eyebrow: "Quote summary",
   title: "Review your estimated verification price.",
   description:
-    "This estimate uses the exporter state, import value, and selected add-ons. Package fees are configurable but set to £0 for now.",
+    "This estimate is calculated by the Java Spring Boot backend using the exporter state, import value, and selected add-ons.",
   selectedPackageLabel: "Selected package",
   exporterLocationLabel: "Exporter location",
   importValueLabel: "Total import value",
@@ -64,12 +64,11 @@ export const QUOTE_SUMMARY_COPY = {
   noAddOnsLabel: "No add-ons selected",
   addOnsTotalLabel: "Add-ons total",
   finalPriceLabel: "Final estimated price",
-  stateMinimumReason:
-    "State minimum fee is higher than 1% of the import value.",
-  onePercentReason:
-    "1% of the import value is higher than the state minimum fee.",
   unavailablePricingMessage:
     "Pricing is not available yet because service is not available in this state.",
+  backendLoadingMessage: "Calculating trusted quote from Spring Boot backend...",
+  backendErrorMessage:
+    "Could not calculate quote from the backend. Please check that the Spring Boot server is running.",
   note:
-    "This quote is based on the details you entered. Final booking confirmation happens after payment in the next step.",
+    "Final price will be verified by myimportagent before payment. This estimate is based on the details you provided.",
 };
