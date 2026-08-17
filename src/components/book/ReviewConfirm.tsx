@@ -1,15 +1,14 @@
+import type { PricingQuoteResponse } from "@/lib/api/pricing";
 import {
   PAYMENT_STATUS_OPTIONS,
-  PRICING_ADD_ONS,
   REVIEW_CONFIRM_COPY,
   QUOTE_SUMMARY_COPY,
 } from "@/lib/constants";
-import { calculateVerificationPrice, formatGbp } from "@/lib/utils";
+import { formatGbp } from "@/lib/utils";
 import type {
   BookingPackage,
   ExporterDetails,
   ImporterDetails,
-  PricingResult,
   ProductOrderDetails,
   ReviewConfirmationKey,
   ReviewConfirmations,
@@ -17,11 +16,11 @@ import type {
 } from "@/types";
 
 type ReviewConfirmProps = Readonly<{
+  backendQuote: PricingQuoteResponse | null;
   exporterDetails: ExporterDetails;
   importerDetails: ImporterDetails;
   isEmailVerified: boolean;
   productOrderDetails: ProductOrderDetails;
-  selectedAddOnIds: readonly string[];
   selectedPackage: BookingPackage | undefined;
   supportingFiles: SupportingFiles;
   confirmations: ReviewConfirmations;
@@ -29,25 +28,16 @@ type ReviewConfirmProps = Readonly<{
 }>;
 
 export function ReviewConfirm({
+  backendQuote,
   exporterDetails,
   importerDetails,
   isEmailVerified,
   productOrderDetails,
-  selectedAddOnIds,
   selectedPackage,
   supportingFiles,
   confirmations,
   onToggleConfirmation,
 }: ReviewConfirmProps) {
-  const importValue = Number(productOrderDetails.importValueGbp);
-  const pricing = calculateVerificationPrice({
-    exporterState: exporterDetails.state,
-    importValueGbp: Number.isFinite(importValue) ? importValue : 0,
-    selectedAddOnIds,
-  });
-  const selectedAddOns = PRICING_ADD_ONS.filter((addOn) =>
-    selectedAddOnIds.includes(addOn.id),
-  );
   const paymentStatusLabel =
     PAYMENT_STATUS_OPTIONS.find(
       (option) => option.value === productOrderDetails.paymentStatus,
@@ -74,6 +64,15 @@ export function ReviewConfirm({
         <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
           <p className="text-sm font-bold text-amber-900">
             {REVIEW_CONFIRM_COPY.emailNotVerified}
+          </p>
+        </div>
+      )}
+
+      {!backendQuote && (
+        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="text-sm font-bold text-red-900">
+            Backend quote is missing. Please go back to Quote Summary and wait
+            for the Java Spring Boot pricing API to calculate the quote.
           </p>
         </div>
       )}
@@ -208,10 +207,10 @@ export function ReviewConfirm({
         </ReviewSection>
 
         <ReviewSection title={REVIEW_CONFIRM_COPY.quoteTitle}>
-          <QuoteReview pricing={pricing} selectedAddOns={selectedAddOns} />
+          <QuoteReview backendQuote={backendQuote} />
           <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
             <p className="text-sm font-semibold leading-6 text-sky-900">
-              {REVIEW_CONFIRM_COPY.quoteNote}
+              {backendQuote?.note ?? REVIEW_CONFIRM_COPY.quoteNote}
             </p>
           </div>
         </ReviewSection>
@@ -367,73 +366,55 @@ function SupportingFilesReview({ files }: SupportingFilesReviewProps) {
 }
 
 type QuoteReviewProps = Readonly<{
-  pricing: PricingResult;
-  selectedAddOns: readonly {
-    id: string;
-    title: string;
-    priceGbp: number;
-  }[];
+  backendQuote: PricingQuoteResponse | null;
 }>;
 
-function QuoteReview({ pricing, selectedAddOns }: QuoteReviewProps) {
+function QuoteReview({ backendQuote }: QuoteReviewProps) {
+  if (!backendQuote) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+        <p className="text-sm font-bold text-red-900">
+          Backend quote is not available.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <ReviewRow
         label="State minimum fee"
-        value={
-          pricing.stateMinimumFee === null
-            ? REVIEW_CONFIRM_COPY.notProvided
-            : formatGbp(pricing.stateMinimumFee)
-        }
+        value={formatGbp(backendQuote.stateMinimumFeeGbp)}
       />
       <ReviewRow
         label="1% of import value"
-        value={formatGbp(pricing.onePercentValue)}
+        value={formatGbp(backendQuote.onePercentValueGbp)}
       />
       <ReviewRow
         label="Selected base price"
-        value={
-          pricing.basePrice === null
-            ? REVIEW_CONFIRM_COPY.notProvided
-            : formatGbp(pricing.basePrice)
-        }
+        value={formatGbp(backendQuote.selectedBasePriceGbp)}
       />
       <ReviewRow
         label="Base price reason"
-        value={getBaseReason(pricing)}
+        value={backendQuote.basePriceReason}
       />
       <ReviewRow
         label="Add-ons selected"
         value={
-          selectedAddOns.length === 0
+          backendQuote.selectedAddOns.length === 0
             ? QUOTE_SUMMARY_COPY.noAddOnsLabel
-            : selectedAddOns.map((addOn) => addOn.title).join(", ")
+            : backendQuote.selectedAddOns.map((addOn) => addOn.name).join(", ")
         }
       />
       <ReviewRow
         label="Add-ons total"
-        value={formatGbp(pricing.addOnsTotal)}
+        value={formatGbp(backendQuote.addOnsTotalGbp)}
       />
       <ReviewRow
         label="Final estimated price"
-        value={
-          pricing.finalPrice === null
-            ? REVIEW_CONFIRM_COPY.notProvided
-            : formatGbp(pricing.finalPrice)
-        }
+        value={formatGbp(backendQuote.finalEstimatedPriceGbp)}
       />
+      <ReviewRow label="Currency" value={backendQuote.currency} />
     </div>
   );
-}
-
-function getBaseReason(pricing: PricingResult) {
-  if (pricing.selectedBaseReason === "state-minimum") {
-    return QUOTE_SUMMARY_COPY.stateMinimumReason;
-  }
-
-  if (pricing.selectedBaseReason === "one-percent") {
-    return QUOTE_SUMMARY_COPY.onePercentReason;
-  }
-
-  return REVIEW_CONFIRM_COPY.notProvided;
 }

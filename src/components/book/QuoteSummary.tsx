@@ -23,6 +23,7 @@ type QuoteSummaryProps = Readonly<{
   selectedAddOnIds: readonly string[];
   selectedPackage: BookingPackage | undefined;
   onToggleAddOn: (addOnId: string) => void;
+  onQuoteChange: (quote: PricingQuoteResponse | null) => void;
 }>;
 
 export function QuoteSummary({
@@ -31,6 +32,7 @@ export function QuoteSummary({
   selectedAddOnIds,
   selectedPackage,
   onToggleAddOn,
+  onQuoteChange,
 }: QuoteSummaryProps) {
   const [backendQuote, setBackendQuote] = useState<PricingQuoteResponse | null>(
     null,
@@ -39,10 +41,6 @@ export function QuoteSummary({
   const [quoteError, setQuoteError] = useState("");
 
   const importValue = Number(productOrderDetails.importValueGbp);
-
-  const selectedAddOns = PRICING_ADD_ONS.filter((addOn) =>
-    selectedAddOnIds.includes(addOn.id),
-  );
 
   const selectedPackageAdjustment =
     selectedPackage && PACKAGE_PRICE_ADJUSTMENTS_GBP[selectedPackage.id];
@@ -69,6 +67,7 @@ export function QuoteSummary({
     async function loadBackendQuote() {
       if (!pricingRequest) {
         setBackendQuote(null);
+        onQuoteChange(null);
         setQuoteError("Exporter state and valid import value are required.");
         return;
       }
@@ -76,15 +75,18 @@ export function QuoteSummary({
       try {
         setIsQuoteLoading(true);
         setQuoteError("");
+        onQuoteChange(null);
 
         const quote = await getPricingQuote(pricingRequest);
 
         if (!shouldIgnoreResponse) {
           setBackendQuote(quote);
+          onQuoteChange(quote);
         }
       } catch (error) {
         if (!shouldIgnoreResponse) {
           setBackendQuote(null);
+          onQuoteChange(null);
           setQuoteError(
             error instanceof Error
               ? error.message
@@ -103,7 +105,7 @@ export function QuoteSummary({
     return () => {
       shouldIgnoreResponse = true;
     };
-  }, [pricingRequest]);
+  }, [pricingRequest, onQuoteChange]);
 
   return (
     <section aria-labelledby="quote-summary-title">

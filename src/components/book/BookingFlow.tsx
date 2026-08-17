@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import type { PricingQuoteResponse } from "@/lib/api/pricing";
 import { Button } from "@/components/ui";
 import {
   AVAILABLE_REGIONS,
@@ -13,7 +14,6 @@ import {
   OTHER_STATE_OPTION,
   PRODUCT_ORDER_DETAILS_VALIDATION,
 } from "@/lib/constants";
-import { calculateVerificationPrice } from "@/lib/utils";
 import type {
   ActiveBookingStep,
   ExporterDetails,
@@ -108,6 +108,9 @@ export function BookingFlow() {
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<readonly string[]>(
     [],
   );
+  const [backendQuote, setBackendQuote] = useState<PricingQuoteResponse | null>(
+    null,
+  );
   const [supportingFiles, setSupportingFiles] = useState<SupportingFiles>(
     EMPTY_SUPPORTING_FILES,
   );
@@ -143,11 +146,6 @@ export function BookingFlow() {
     productOrderErrors,
     touchedProductOrderFields,
   );
-  const quotePricing = calculateVerificationPrice({
-    exporterState: exporterDetails.state,
-    importValueGbp: Number(productOrderDetails.importValueGbp),
-    selectedAddOnIds,
-  });
   const isImporterDetailsValid = Object.keys(importerErrors).length === 0;
   const isExporterDetailsValid = Object.keys(exporterErrors).length === 0;
   const isProductOrderDetailsValid =
@@ -155,6 +153,7 @@ export function BookingFlow() {
   const areReviewConfirmationsComplete = Object.values(
     reviewConfirmations,
   ).every(Boolean);
+
   const canContinue =
     (activeStep === 1 && Boolean(selectedPackage)) ||
     (activeStep === 2 && isImporterDetailsValid) ||
@@ -162,13 +161,19 @@ export function BookingFlow() {
     (activeStep === 4 && isExporterDetailsValid) ||
     (activeStep === 5 && isProductOrderDetailsValid) ||
     activeStep === 6 ||
-    (activeStep === 7 && quotePricing.finalPrice !== null) ||
+    (activeStep === 7 && backendQuote !== null) ||
     (activeStep === 8 &&
+      backendQuote !== null &&
       areReviewConfirmationsComplete &&
       !isSubmittingDemo);
 
+  function resetBackendQuote() {
+    setBackendQuote(null);
+  }
+
   function handleSelectPackage(packageId: string) {
     setSelectedPackageId(packageId);
+    resetBackendQuote();
     setFlowMessage("");
   }
 
@@ -202,6 +207,7 @@ export function BookingFlow() {
       ...currentDetails,
       [field]: value,
     }));
+    resetBackendQuote();
     setFlowMessage("");
 
     if (field === "state") {
@@ -227,6 +233,7 @@ export function BookingFlow() {
       ...currentDetails,
       [field]: value,
     }));
+    resetBackendQuote();
     setFlowMessage("");
   }
 
@@ -261,6 +268,7 @@ export function BookingFlow() {
         ? currentAddOns.filter((selectedAddOnId) => selectedAddOnId !== addOnId)
         : [...currentAddOns, addOnId],
     );
+    resetBackendQuote();
     setFlowMessage("");
   }
 
@@ -370,8 +378,8 @@ export function BookingFlow() {
     }
 
     if (activeStep === 7) {
-      // Future integration point: ask the Java Spring Boot pricing API to
-      // verify the quote before moving into the review step.
+      // The quote step can only continue after the Java Spring Boot pricing
+      // API returns a trusted backend quote.
       setActiveStep(8);
       setFlowMessage("");
       return;
@@ -384,9 +392,9 @@ export function BookingFlow() {
     setIsSubmittingDemo(true);
     setFlowMessage(BOOKING_FLOW_COPY.finalSubmitLoadingMessage);
 
-    // Future integration point: create booking draft, verify final price,
-    // save the booking to PostgreSQL, and start the Stripe payment flow from
-    // the Java Spring Boot REST API. This demo only prepares local UI state.
+    // Future integration point: create booking draft, recalculate the final
+    // price again on the backend, save the trusted booking to PostgreSQL, and
+    // start the Stripe payment flow from the Java Spring Boot REST API.
     window.setTimeout(() => {
       const demoReference = `MIA-DEMO-${Math.floor(
         10000 + Math.random() * 90000,
@@ -477,6 +485,7 @@ export function BookingFlow() {
             {activeStep === 7 && (
               <QuoteSummary
                 exporterDetails={exporterDetails}
+                onQuoteChange={setBackendQuote}
                 onToggleAddOn={handleAddOnToggle}
                 productOrderDetails={productOrderDetails}
                 selectedAddOnIds={selectedAddOnIds}
@@ -486,13 +495,13 @@ export function BookingFlow() {
 
             {activeStep === 8 && (
               <ReviewConfirm
+                backendQuote={backendQuote}
                 confirmations={reviewConfirmations}
                 exporterDetails={exporterDetails}
                 importerDetails={importerDetails}
                 isEmailVerified={isEmailVerified}
                 onToggleConfirmation={handleReviewConfirmationToggle}
                 productOrderDetails={productOrderDetails}
-                selectedAddOnIds={selectedAddOnIds}
                 selectedPackage={selectedPackage}
                 supportingFiles={supportingFiles}
               />
