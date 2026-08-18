@@ -1,0 +1,16 @@
+services:
+  myimportagent-postgres:
+    image: postgres:16
+    container_name: myimportagent-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: myimportagent
+      POSTGRES_USER: myimportagent_user
+      POSTGRES_PASSWORD: myimportagent_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - myimportagent_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  myimportagent_postgres_data:

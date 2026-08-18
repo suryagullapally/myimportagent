@@ -1,0 +1,134 @@
+package com.myimportagent.backend.booking;
+
+import jakarta.persistence.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "bookings")
+public class BookingEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "booking_reference", nullable = false, unique = true)
+    private String bookingReference;
+
+    @Column(name = "package_id", nullable = false)
+    private String packageId;
+
+    @Column(nullable = false)
+    private String status;
+
+    @Column(name = "importer_email", nullable = false)
+    private String importerEmail;
+
+    @Column(name = "exporter_state", nullable = false)
+    private String exporterState;
+
+    @Column(name = "exporter_city", nullable = false)
+    private String exporterCity;
+
+    @Column(name = "import_value_gbp", nullable = false, precision = 12, scale = 2)
+    private BigDecimal importValueGbp;
+
+    @Column(name = "final_estimated_price_gbp", nullable = false, precision = 12, scale = 2)
+    private BigDecimal finalEstimatedPriceGbp;
+
+    @Column(nullable = false)
+    private String currency;
+
+    @Column(name = "booking_request_json", nullable = false, columnDefinition = "TEXT")
+    private String bookingRequestJson;
+
+    @Column(name = "trusted_quote_json", nullable = false, columnDefinition = "TEXT")
+    private String trustedQuoteJson;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    protected BookingEntity() {
+    }
+
+    public BookingEntity(
+            String bookingReference,
+            String packageId,
+            String status,
+            String importerEmail,
+            String exporterState,
+            String exporterCity,
+            BigDecimal importValueGbp,
+            BigDecimal finalEstimatedPriceGbp,
+            String currency,
+            String bookingRequestJson,
+            String trustedQuoteJson,
+            LocalDateTime createdAt
+    ) {
+        this.bookingReference = bookingReference;
+        this.packageId = packageId;
+        this.status = status;
+        this.importerEmail = importerEmail;
+        this.exporterState = exporterState;
+        this.exporterCity = exporterCity;
+        this.importValueGbp = importValueGbp;
+        this.finalEstimatedPriceGbp = finalEstimatedPriceGbp;
+        this.currency = currency;
+        this.bookingRequestJson = bookingRequestJson;
+        this.trustedQuoteJson = trustedQuoteJson;
+        this.createdAt = createdAt;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getBookingReference() {
+        return bookingReference;
+    }
+
+    public String getPackageId() {
+        return packageId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getImporterEmail() {
+        return importerEmail;
+    }
+
+    public String getExporterState() {
+        return exporterState;
+    }
+
+    public String getExporterCity() {
+        return exporterCity;
+    }
+
+    public BigDecimal getImportValueGbp() {
+        return importValueGbp;
+    }
+
+    public BigDecimal getFinalEstimatedPriceGbp() {
+        return finalEstimatedPriceGbp;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public String getBookingRequestJson() {
+        return bookingRequestJson;
+    }
+
+    public String getTrustedQuoteJson() {
+        return trustedQuoteJson;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+}

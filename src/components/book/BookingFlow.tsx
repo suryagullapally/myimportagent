@@ -1,5 +1,5 @@
 "use client";
-
+import { createBooking } from "@/lib/api/bookings";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { PricingQuoteResponse } from "@/lib/api/pricing";
@@ -388,28 +388,65 @@ export function BookingFlow() {
     handleDemoSubmit();
   }
 
-  function handleDemoSubmit() {
+  async function handleDemoSubmit() {
+  if (!selectedPackage) {
+    setFlowMessage(BOOKING_FLOW_COPY.packageRequiredMessage);
+    return;
+  }
+
+  if (!backendQuote) {
+    setFlowMessage("Please wait for the backend quote before submitting.");
+    return;
+  }
+
+  const importValue = Number(productOrderDetails.importValueGbp);
+
+  if (!Number.isFinite(importValue) || importValue <= 0) {
+    setFlowMessage(PRODUCT_ORDER_DETAILS_VALIDATION.importValueInvalid);
+    return;
+  }
+
+  try {
     setIsSubmittingDemo(true);
     setFlowMessage(BOOKING_FLOW_COPY.finalSubmitLoadingMessage);
 
-    // Future integration point: create booking draft, recalculate the final
-    // price again on the backend, save the trusted booking to PostgreSQL, and
-    // start the Stripe payment flow from the Java Spring Boot REST API.
-    window.setTimeout(() => {
-      const demoReference = `MIA-DEMO-${Math.floor(
-        10000 + Math.random() * 90000,
-      )}`;
-      const params = new URLSearchParams({
-        reference: demoReference,
-      });
+    const response = await createBooking({
+      packageId: selectedPackage.id,
+      importerDetails: {
+        ...importerDetails,
+        emailVerified: isEmailVerified,
+      },
+      exporterDetails,
+      productOrderDetails: {
+        ...productOrderDetails,
+        importValueGbp: importValue,
+      },
+      selectedAddOnIds: [...selectedAddOnIds],
+      supportingFiles,
+    });
 
-      if (selectedPackage?.title) {
-        params.set("package", selectedPackage.title);
-      }
+    const params = new URLSearchParams({
+      reference: response.bookingReference,
+      status: response.status,
+      persisted: String(response.persisted),
+      finalPrice: String(response.trustedQuote.finalEstimatedPriceGbp),
+      currency: response.trustedQuote.currency,
+    });
 
-      router.push(`/book/confirmation?${params.toString()}`);
-    }, 700);
+    if (selectedPackage.title) {
+      params.set("package", selectedPackage.title);
+    }
+
+    router.push(`/book/confirmation?${params.toString()}`);
+  } catch (error) {
+    setFlowMessage(
+      error instanceof Error
+        ? error.message
+        : "Could not submit booking request. Please try again.",
+    );
+    setIsSubmittingDemo(false);
   }
+}
 
   return (
     <section className="bg-surface px-6 py-20 sm:px-8 lg:px-10">
