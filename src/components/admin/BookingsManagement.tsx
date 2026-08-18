@@ -1,45 +1,85 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BOOKING_PACKAGES } from "@/lib/constants";
 import {
-  ADMIN_BOOKING_STATUS_OPTIONS,
-  ADMIN_BOOKINGS,
-} from "@/lib/mock";
+  getAdminBookings,
+  type AdminBookingListItem,
+} from "@/lib/api/adminBookings";
 import { BookingsTable } from "./BookingsTable";
 
 const allFilterValue = "all";
 
 export function BookingsManagement() {
+  const [bookings, setBookings] = useState<AdminBookingListItem[]>([]);
   const [statusFilter, setStatusFilter] = useState(allFilterValue);
   const [packageFilter, setPackageFilter] = useState(allFilterValue);
   const [stateFilter, setStateFilter] = useState(allFilterValue);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    loadBookings();
+  }, []);
+
+  async function loadBookings() {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const data = await getAdminBookings();
+      setBookings(data);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not load bookings from the backend.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const statusOptions = useMemo(
+    () =>
+      Array.from(new Set(bookings.map((booking) => booking.status)))
+        .filter(Boolean)
+        .sort((first, second) => first.localeCompare(second)),
+    [bookings],
+  );
 
   const stateOptions = useMemo(
     () =>
-      Array.from(new Set(ADMIN_BOOKINGS.map((booking) => booking.exporter.state)))
+      Array.from(new Set(bookings.map((booking) => booking.exporterState)))
+        .filter(Boolean)
         .sort((first, second) => first.localeCompare(second)),
-    [],
+    [bookings],
   );
 
   const filteredBookings = useMemo(() => {
     const normalisedSearch = searchQuery.trim().toLowerCase();
 
-    return ADMIN_BOOKINGS.filter((booking) => {
+    return bookings.filter((booking) => {
+      const packageTitle = getPackageTitle(booking.packageId);
+
       const matchesStatus =
         statusFilter === allFilterValue || booking.status === statusFilter;
+
       const matchesPackage =
-        packageFilter === allFilterValue || booking.package.id === packageFilter;
+        packageFilter === allFilterValue || booking.packageId === packageFilter;
+
       const matchesState =
-        stateFilter === allFilterValue || booking.exporter.state === stateFilter;
+        stateFilter === allFilterValue || booking.exporterState === stateFilter;
+
       const searchableText = [
-        booking.reference,
-        booking.importer.fullName,
-        booking.importer.companyName,
-        booking.exporter.businessName,
-        booking.exporter.city,
-        booking.exporter.state,
+        booking.bookingReference,
+        booking.importerEmail,
+        booking.exporterCity,
+        booking.exporterState,
+        booking.packageId,
+        packageTitle,
+        booking.status,
       ]
         .join(" ")
         .toLowerCase();
@@ -50,7 +90,7 @@ export function BookingsManagement() {
 
       return matchesStatus && matchesPackage && matchesState && matchesSearch;
     });
-  }, [packageFilter, searchQuery, stateFilter, statusFilter]);
+  }, [bookings, packageFilter, searchQuery, stateFilter, statusFilter]);
 
   function resetFilters() {
     setStatusFilter(allFilterValue);
@@ -69,19 +109,19 @@ export function BookingsManagement() {
           Manage customer bookings
         </h2>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Filter local mock bookings by status, package, exporter state, or a
-          quick search. Later this page will read from GET /api/admin/bookings.
+          This page now reads saved bookings from PostgreSQL through the Java
+          Spring Boot backend.
         </p>
       </div>
 
       <section className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.3fr_1fr_1fr_1fr_auto]">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.3fr_1fr_1fr_1fr_auto_auto]">
           <label className="block">
             <span className="text-sm font-bold text-slate-700">Search</span>
             <input
               className={fieldClassName}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Reference, customer, exporter..."
+              placeholder="Reference, email, state..."
               type="search"
               value={searchQuery}
             />
@@ -95,9 +135,9 @@ export function BookingsManagement() {
               value={statusFilter}
             >
               <option value={allFilterValue}>All statuses</option>
-              {ADMIN_BOOKING_STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
+              {statusOptions.map((status) => (
+                <option key={status} value={status}>
+                  {formatLabel(status)}
                 </option>
               ))}
             </select>
@@ -142,19 +182,55 @@ export function BookingsManagement() {
           >
             Reset
           </button>
+
+          <button
+            className="mt-6 min-h-12 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800 shadow-sm transition hover:bg-emerald-100"
+            onClick={loadBookings}
+            type="button"
+          >
+            Refresh
+          </button>
         </div>
       </section>
 
+      {errorMessage && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-900">
+          {errorMessage}
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm font-semibold text-slate-600">
-          Showing {filteredBookings.length} of {ADMIN_BOOKINGS.length} mock
-          booking requests.
+          {isLoading
+            ? "Loading bookings from backend..."
+            : `Showing ${filteredBookings.length} of ${bookings.length} saved booking requests.`}
         </p>
       </div>
 
-      <BookingsTable bookings={filteredBookings} />
+      <BookingsTable
+        bookings={filteredBookings}
+        emptyMessage={
+          isLoading
+            ? "Loading bookings..."
+            : "No booking requests match this view."
+        }
+      />
     </div>
   );
+}
+
+function getPackageTitle(packageId: string) {
+  return (
+    BOOKING_PACKAGES.find((bookingPackage) => bookingPackage.id === packageId)
+      ?.title ?? packageId
+  );
+}
+
+function formatLabel(value: string) {
+  return value
+    .replaceAll("-", " ")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 const fieldClassName =
