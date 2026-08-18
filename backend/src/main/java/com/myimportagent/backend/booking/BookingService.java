@@ -71,7 +71,53 @@ public class BookingService {
                 trustedQuote
         );
     }
+    public List<BookingListItemResponse> getBookings() {
+    return bookingRepository.findAllByOrderByCreatedAtDesc()
+            .stream()
+            .map(this::toListItemResponse)
+            .toList();
+}
 
+public BookingDetailResponse getBookingByReference(String bookingReference) {
+    BookingEntity booking = bookingRepository.findByBookingReference(bookingReference)
+            .orElseThrow(() -> new IllegalArgumentException("Booking was not found."));
+
+    return toDetailResponse(booking);
+}
+
+private BookingListItemResponse toListItemResponse(BookingEntity booking) {
+    return new BookingListItemResponse(
+            booking.getId(),
+            booking.getBookingReference(),
+            booking.getPackageId(),
+            booking.getStatus(),
+            booking.getImporterEmail(),
+            booking.getExporterState(),
+            booking.getExporterCity(),
+            booking.getImportValueGbp(),
+            booking.getFinalEstimatedPriceGbp(),
+            booking.getCurrency(),
+            booking.getCreatedAt()
+    );
+}
+
+private BookingDetailResponse toDetailResponse(BookingEntity booking) {
+    return new BookingDetailResponse(
+            booking.getId(),
+            booking.getBookingReference(),
+            booking.getPackageId(),
+            booking.getStatus(),
+            booking.getImporterEmail(),
+            booking.getExporterState(),
+            booking.getExporterCity(),
+            booking.getImportValueGbp(),
+            booking.getFinalEstimatedPriceGbp(),
+            booking.getCurrency(),
+            booking.getBookingRequestJson(),
+            booking.getTrustedQuoteJson(),
+            booking.getCreatedAt()
+    );
+}
     private void validateBookingRequest(BookingCreateRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Booking request is required.");
