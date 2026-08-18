@@ -22,6 +22,12 @@ public class BookingEntity {
     @Column(nullable = false)
     private String status;
 
+    @Column(name = "assigned_agent_id")
+    private String assignedAgentId;
+
+    @Column(name = "internal_notes", columnDefinition = "TEXT")
+    private String internalNotes;
+
     @Column(name = "importer_email", nullable = false)
     private String importerEmail;
 
@@ -69,6 +75,8 @@ public class BookingEntity {
         this.bookingReference = bookingReference;
         this.packageId = packageId;
         this.status = status;
+        this.assignedAgentId = "";
+        this.internalNotes = "";
         this.importerEmail = importerEmail;
         this.exporterState = exporterState;
         this.exporterCity = exporterCity;
@@ -94,6 +102,14 @@ public class BookingEntity {
 
     public String getStatus() {
         return status;
+    }
+    
+    public String getAssignedAgentId() {
+        return assignedAgentId;
+    }
+
+    public String getInternalNotes() {
+        return internalNotes;
     }
 
     public String getImporterEmail() {
@@ -131,4 +147,13 @@ public class BookingEntity {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+    public void updateAdminFields(
+        String status,
+        String assignedAgentId,
+        String internalNotes
+) {
+    this.status = status;
+    this.assignedAgentId = assignedAgentId;
+    this.internalNotes = internalNotes;
+}
 }

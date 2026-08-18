@@ -91,6 +91,7 @@ private BookingListItemResponse toListItemResponse(BookingEntity booking) {
             booking.getBookingReference(),
             booking.getPackageId(),
             booking.getStatus(),
+            booking.getAssignedAgentId(),
             booking.getImporterEmail(),
             booking.getExporterState(),
             booking.getExporterCity(),
@@ -107,6 +108,8 @@ private BookingDetailResponse toDetailResponse(BookingEntity booking) {
             booking.getBookingReference(),
             booking.getPackageId(),
             booking.getStatus(),
+            booking.getAssignedAgentId(),
+            booking.getInternalNotes(),
             booking.getImporterEmail(),
             booking.getExporterState(),
             booking.getExporterCity(),
@@ -117,6 +120,32 @@ private BookingDetailResponse toDetailResponse(BookingEntity booking) {
             booking.getTrustedQuoteJson(),
             booking.getCreatedAt()
     );
+}
+@Transactional
+public BookingDetailResponse updateBookingAdminFields(
+        String bookingReference,
+        BookingAdminUpdateRequest request
+) {
+    if (request == null) {
+        throw new IllegalArgumentException("Admin update request is required.");
+    }
+
+    if (isBlank(request.status())) {
+        throw new IllegalArgumentException("Booking status is required.");
+    }
+
+    BookingEntity booking = bookingRepository.findByBookingReference(bookingReference)
+            .orElseThrow(() -> new IllegalArgumentException("Booking was not found."));
+
+    booking.updateAdminFields(
+            request.status(),
+            request.assignedAgentId() == null ? "" : request.assignedAgentId(),
+            request.internalNotes() == null ? "" : request.internalNotes()
+    );
+
+    BookingEntity savedBooking = bookingRepository.save(booking);
+
+    return toDetailResponse(savedBooking);
 }
     private void validateBookingRequest(BookingCreateRequest request) {
         if (request == null) {

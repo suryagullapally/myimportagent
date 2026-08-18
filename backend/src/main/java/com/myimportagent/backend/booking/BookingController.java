@@ -44,4 +44,19 @@ public class BookingController {
                     .body(new BookingErrorResponse(exception.getMessage()));
         }
     }
+    @PatchMapping("/api/bookings/{bookingReference}/admin")
+public ResponseEntity<?> updateBookingAdminFields(
+        @PathVariable String bookingReference,
+        @RequestBody BookingAdminUpdateRequest request
+) {
+    try {
+        BookingDetailResponse response =
+                bookingService.updateBookingAdminFields(bookingReference, request);
+
+        return ResponseEntity.ok(response);
+    } catch (IllegalArgumentException exception) {
+        return ResponseEntity.badRequest()
+                .body(new BookingErrorResponse(exception.getMessage()));
+    }
+}
 }

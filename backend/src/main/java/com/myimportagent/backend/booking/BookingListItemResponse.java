@@ -8,6 +8,7 @@ public record BookingListItemResponse(
         String bookingReference,
         String packageId,
         String status,
+        String assignedAgentId,
         String importerEmail,
         String exporterState,
         String exporterCity,
