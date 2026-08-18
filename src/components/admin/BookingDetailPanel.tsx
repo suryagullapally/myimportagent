@@ -3,10 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui";
 import { BOOKING_PACKAGES, PAYMENT_STATUS_OPTIONS } from "@/lib/constants";
-import {
-  ADMIN_AGENTS,
-  ADMIN_BOOKING_STATUS_OPTIONS,
-} from "@/lib/mock";
+import { ADMIN_BOOKING_STATUS_OPTIONS } from "@/lib/mock";
+import { getAgents, type AgentResponse } from "@/lib/api/agents";
 import {
   getAdminBookingByReference,
   updateAdminBookingFields,
@@ -75,6 +73,7 @@ export function BookingDetailPanel({
   bookingReference,
 }: BookingDetailPanelProps) {
   const [booking, setBooking] = useState<AdminBookingDetail | null>(null);
+  const [agents, setAgents] = useState<AgentResponse[]>([]);
   const [bookingStatus, setBookingStatus] = useState("");
   const [assignedAgentId, setAssignedAgentId] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
@@ -88,27 +87,31 @@ export function BookingDetailPanel({
   }, [bookingReference]);
 
   async function loadBooking() {
-    try {
-      setIsLoading(true);
-      setErrorMessage("");
-      setSuccessMessage("");
+  try {
+    setIsLoading(true);
+    setErrorMessage("");
+    setSuccessMessage("");
 
-      const data = await getAdminBookingByReference(bookingReference);
+    const [bookingData, agentsData] = await Promise.all([
+      getAdminBookingByReference(bookingReference),
+      getAgents(),
+    ]);
 
-      setBooking(data);
-      setBookingStatus(data.status);
-      setAssignedAgentId(data.assignedAgentId ?? "");
-      setInternalNotes(data.internalNotes ?? "");
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Could not load booking details from the backend.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    setBooking(bookingData);
+    setAgents(agentsData);
+    setBookingStatus(bookingData.status);
+    setAssignedAgentId(bookingData.assignedAgentId ?? "");
+    setInternalNotes(bookingData.internalNotes ?? "");
+  } catch (error) {
+    setErrorMessage(
+      error instanceof Error
+        ? error.message
+        : "Could not load booking details from the backend.",
+    );
+  } finally {
+    setIsLoading(false);
   }
+}
 
   async function handleSaveChanges() {
     if (!booking) {
@@ -166,7 +169,7 @@ export function BookingDetailPanel({
   const packageDescription = getPackageDescription(
     bookingRequest?.packageId ?? booking?.packageId ?? "",
   );
-
+  
   const paymentStatusLabel =
     PAYMENT_STATUS_OPTIONS.find(
       (option) =>
@@ -175,9 +178,9 @@ export function BookingDetailPanel({
     bookingRequest?.productOrderDetails.paymentStatus ??
     "Not provided";
 
-  const assignedAgent = ADMIN_AGENTS.find(
-    (agent) => agent.id === assignedAgentId,
-  );
+  const assignedAgent = agents.find(
+  (agent) => agent.agentId === assignedAgentId,
+);
 
   if (isLoading) {
     return (
@@ -477,15 +480,15 @@ export function BookingDetailPanel({
                   value={assignedAgentId}
                 >
                   <option value="">Unassigned</option>
-                  {ADMIN_AGENTS.map((agent) => (
-                    <option key={agent.id} value={agent.id}>
-                      {agent.name} - {agent.city}
-                    </option>
-                  ))}
-                  {assignedAgentId &&
-                    !ADMIN_AGENTS.some((agent) => agent.id === assignedAgentId) && (
-                      <option value={assignedAgentId}>{assignedAgentId}</option>
-                    )}
+                  {agents.map((agent) => (
+  <option key={agent.agentId} value={agent.agentId}>
+    {agent.name} - {agent.city}, {agent.state}
+  </option>
+))}
+{assignedAgentId &&
+  !agents.some((agent) => agent.agentId === assignedAgentId) && (
+    <option value={assignedAgentId}>{assignedAgentId}</option>
+  )}
                 </select>
               </label>
 
@@ -525,8 +528,8 @@ export function BookingDetailPanel({
             </h3>
             <p className="mt-2 text-sm text-slate-600">
               {assignedAgent
-                ? `${assignedAgent.name}, ${assignedAgent.city}`
-                : assignedAgentId || "No agent selected"}
+  ? `${assignedAgent.name}, ${assignedAgent.city}, ${assignedAgent.state}`
+  : assignedAgentId || "No agent selected"}
             </p>
 
             <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
