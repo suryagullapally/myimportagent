@@ -27,7 +27,21 @@ public class BookingEntity {
 
     @Column(name = "internal_notes", columnDefinition = "TEXT")
     private String internalNotes;
+    
+    @Column(name = "visit_result_status")
+private String visitResultStatus;
 
+@Column(name = "visit_summary", columnDefinition = "TEXT")
+private String visitSummary;
+
+@Column(name = "issues_found", columnDefinition = "TEXT")
+private String issuesFound;
+
+@Column(name = "agent_next_action", columnDefinition = "TEXT")
+private String agentNextAction;
+
+@Column(name = "visit_completed_at")
+private LocalDateTime visitCompletedAt;
     @Column(name = "importer_email", nullable = false)
     private String importerEmail;
 
@@ -77,6 +91,11 @@ public class BookingEntity {
         this.status = status;
         this.assignedAgentId = "";
         this.internalNotes = "";
+        this.visitResultStatus = "";
+this.visitSummary = "";
+this.issuesFound = "";
+this.agentNextAction = "";
+this.visitCompletedAt = null;
         this.importerEmail = importerEmail;
         this.exporterState = exporterState;
         this.exporterCity = exporterCity;
@@ -111,7 +130,26 @@ public class BookingEntity {
     public String getInternalNotes() {
         return internalNotes;
     }
+    
+    public String getVisitResultStatus() {
+    return visitResultStatus;
+}
 
+public String getVisitSummary() {
+    return visitSummary;
+}
+
+public String getIssuesFound() {
+    return issuesFound;
+}
+
+public String getAgentNextAction() {
+    return agentNextAction;
+}
+
+public LocalDateTime getVisitCompletedAt() {
+    return visitCompletedAt;
+}
     public String getImporterEmail() {
         return importerEmail;
     }
@@ -155,5 +193,19 @@ public class BookingEntity {
     this.status = status;
     this.assignedAgentId = assignedAgentId;
     this.internalNotes = internalNotes;
+}
+public void submitVisitResult(
+        String visitResultStatus,
+        String visitSummary,
+        String issuesFound,
+        String agentNextAction,
+        LocalDateTime visitCompletedAt
+) {
+    this.visitResultStatus = visitResultStatus;
+    this.visitSummary = visitSummary;
+    this.issuesFound = issuesFound;
+    this.agentNextAction = agentNextAction;
+    this.visitCompletedAt = visitCompletedAt;
+    this.status = "completed";
 }
 }

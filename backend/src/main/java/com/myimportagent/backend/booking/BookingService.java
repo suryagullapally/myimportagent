@@ -110,6 +110,11 @@ private BookingDetailResponse toDetailResponse(BookingEntity booking) {
             booking.getStatus(),
             booking.getAssignedAgentId(),
             booking.getInternalNotes(),
+            booking.getVisitResultStatus(),
+            booking.getVisitSummary(),
+            booking.getIssuesFound(),
+            booking.getAgentNextAction(),
+            booking.getVisitCompletedAt(),
             booking.getImporterEmail(),
             booking.getExporterState(),
             booking.getExporterCity(),
@@ -178,6 +183,51 @@ public BookingDetailResponse getAssignedBookingForAgent(
     }
 
     return toDetailResponse(booking);
+}
+    @Transactional
+public BookingDetailResponse submitAgentVisitResult(
+        String agentId,
+        String bookingReference,
+        AgentVisitResultRequest request
+) {
+    if (isBlank(agentId)) {
+        throw new IllegalArgumentException("Agent ID is required.");
+    }
+
+    if (isBlank(bookingReference)) {
+        throw new IllegalArgumentException("Booking reference is required.");
+    }
+
+    if (request == null) {
+        throw new IllegalArgumentException("Visit result request is required.");
+    }
+
+    if (isBlank(request.visitResultStatus())) {
+        throw new IllegalArgumentException("Visit result status is required.");
+    }
+
+    if (isBlank(request.visitSummary())) {
+        throw new IllegalArgumentException("Visit summary is required.");
+    }
+
+    BookingEntity booking = bookingRepository.findByBookingReference(bookingReference)
+            .orElseThrow(() -> new IllegalArgumentException("Booking was not found."));
+
+    if (!agentId.equals(booking.getAssignedAgentId())) {
+        throw new IllegalArgumentException("This booking is not assigned to this agent.");
+    }
+
+    booking.submitVisitResult(
+            request.visitResultStatus().trim(),
+            request.visitSummary().trim(),
+            request.issuesFound() == null ? "" : request.issuesFound().trim(),
+            request.agentNextAction() == null ? "" : request.agentNextAction().trim(),
+            LocalDateTime.now()
+    );
+
+    BookingEntity savedBooking = bookingRepository.save(booking);
+
+    return toDetailResponse(savedBooking);
 }
     private void validateBookingRequest(BookingCreateRequest request) {
         if (request == null) {

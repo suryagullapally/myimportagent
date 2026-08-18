@@ -87,4 +87,20 @@ public ResponseEntity<?> getAgentJobByReference(
                 .body(new BookingErrorResponse(exception.getMessage()));
     }
 }
+@PostMapping("/api/agent/jobs/{bookingReference}/submit-result")
+public ResponseEntity<?> submitAgentVisitResult(
+        @PathVariable String bookingReference,
+        @RequestParam String agentId,
+        @RequestBody AgentVisitResultRequest request
+) {
+    try {
+        BookingDetailResponse response =
+                bookingService.submitAgentVisitResult(agentId, bookingReference, request);
+
+        return ResponseEntity.ok(response);
+    } catch (IllegalArgumentException exception) {
+        return ResponseEntity.badRequest()
+                .body(new BookingErrorResponse(exception.getMessage()));
+    }
+}
 }
