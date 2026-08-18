@@ -20,6 +20,11 @@ export type AdminBookingDetail = {
   status: string;
   assignedAgentId: string;
   internalNotes: string;
+  visitResultStatus: string;
+visitSummary: string;
+issuesFound: string;
+agentNextAction: string;
+visitCompletedAt: string | null;
   importerEmail: string;
   exporterState: string;
   exporterCity: string;

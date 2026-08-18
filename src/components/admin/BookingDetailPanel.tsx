@@ -433,6 +433,32 @@ export function BookingDetailPanel({
               files={bookingRequest?.supportingFiles ?? {}}
             />
           </SummaryCard>
+          <SummaryCard title="Agent visit result">
+  <DetailRow
+    label="Result status"
+    value={booking.visitResultStatus ? formatLabel(booking.visitResultStatus) : ""}
+  />
+  <DetailRow
+    label="Visit summary"
+    value={booking.visitSummary ?? ""}
+  />
+  <DetailRow
+    label="Issues found"
+    value={booking.issuesFound ?? ""}
+  />
+  <DetailRow
+    label="Agent next action"
+    value={booking.agentNextAction ?? ""}
+  />
+  <DetailRow
+    label="Visit completed at"
+    value={
+      booking.visitCompletedAt
+        ? formatDateTime(booking.visitCompletedAt)
+        : ""
+    }
+  />
+</SummaryCard>
         </div>
 
         <aside className="space-y-6">
@@ -704,6 +730,15 @@ function formatDate(dateValue: string) {
     day: "2-digit",
     month: "long",
     year: "numeric",
+  }).format(new Date(dateValue));
+}
+function formatDateTime(dateValue: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(new Date(dateValue));
 }
 
