@@ -147,6 +147,38 @@ public BookingDetailResponse updateBookingAdminFields(
 
     return toDetailResponse(savedBooking);
 }
+    public List<BookingListItemResponse> getBookingsAssignedToAgent(String agentId) {
+    if (isBlank(agentId)) {
+        throw new IllegalArgumentException("Agent ID is required.");
+    }
+
+    return bookingRepository.findAllByAssignedAgentIdOrderByCreatedAtDesc(agentId)
+            .stream()
+            .map(this::toListItemResponse)
+            .toList();
+}
+
+public BookingDetailResponse getAssignedBookingForAgent(
+        String agentId,
+        String bookingReference
+) {
+    if (isBlank(agentId)) {
+        throw new IllegalArgumentException("Agent ID is required.");
+    }
+
+    if (isBlank(bookingReference)) {
+        throw new IllegalArgumentException("Booking reference is required.");
+    }
+
+    BookingEntity booking = bookingRepository.findByBookingReference(bookingReference)
+            .orElseThrow(() -> new IllegalArgumentException("Booking was not found."));
+
+    if (!agentId.equals(booking.getAssignedAgentId())) {
+        throw new IllegalArgumentException("This booking is not assigned to this agent.");
+    }
+
+    return toDetailResponse(booking);
+}
     private void validateBookingRequest(BookingCreateRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Booking request is required.");

@@ -9,5 +9,9 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
 
     List<BookingEntity> findAllByOrderByCreatedAtDesc();
 
+    List<BookingEntity> findAllByAssignedAgentIdOrderByCreatedAtDesc(
+            String assignedAgentId
+    );
+
     Optional<BookingEntity> findByBookingReference(String bookingReference);
 }

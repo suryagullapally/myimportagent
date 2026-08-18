@@ -59,4 +59,32 @@ public ResponseEntity<?> updateBookingAdminFields(
                 .body(new BookingErrorResponse(exception.getMessage()));
     }
 }
+@GetMapping("/api/agent/jobs")
+public ResponseEntity<?> getAgentJobs(@RequestParam String agentId) {
+    try {
+        List<BookingListItemResponse> response =
+                bookingService.getBookingsAssignedToAgent(agentId);
+
+        return ResponseEntity.ok(response);
+    } catch (IllegalArgumentException exception) {
+        return ResponseEntity.badRequest()
+                .body(new BookingErrorResponse(exception.getMessage()));
+    }
+}
+
+@GetMapping("/api/agent/jobs/{bookingReference}")
+public ResponseEntity<?> getAgentJobByReference(
+        @PathVariable String bookingReference,
+        @RequestParam String agentId
+) {
+    try {
+        BookingDetailResponse response =
+                bookingService.getAssignedBookingForAgent(agentId, bookingReference);
+
+        return ResponseEntity.ok(response);
+    } catch (IllegalArgumentException exception) {
+        return ResponseEntity.badRequest()
+                .body(new BookingErrorResponse(exception.getMessage()));
+    }
+}
 }

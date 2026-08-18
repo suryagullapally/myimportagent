@@ -1,16 +1,129 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { BOOKING_PACKAGES } from "@/lib/constants";
 import {
-  getAgentJobStatusLabel,
-} from "@/lib/mock";
-import type { AgentJob } from "@/types";
-import { AgentStatusBadge, getAgentJobStatusTone } from "./AgentStatusBadge";
+  getAgentJobByReference,
+  type AgentJobDetail as AgentJobDetailResponse,
+} from "@/lib/api/agentJobs";
+import { formatGbp } from "@/lib/utils/pricing";
 import { EvidenceUploadPlaceholder } from "./EvidenceUploadPlaceholder";
 import { VisitResultForm } from "./VisitResultForm";
 
+const temporaryAgentId = "agent-hyderabad-1494";
+
 type AgentJobDetailProps = Readonly<{
-  job: AgentJob;
+  bookingReference: string;
 }>;
 
-export function AgentJobDetail({ job }: AgentJobDetailProps) {
+type BookingRequestPayload = {
+  packageId: string;
+  importerDetails: {
+    fullName: string;
+    companyName: string;
+    country: string;
+    phone: string;
+    email: string;
+    emailVerified: boolean;
+  };
+  exporterDetails: {
+    businessName: string;
+    contactPerson: string;
+    phone: string;
+    email: string;
+    fullAddress: string;
+    state: string;
+    city: string;
+    googleMapsLink: string;
+    gstNumber: string;
+    profileLink: string;
+  };
+  productOrderDetails: {
+    productCategory: string;
+    productDescription: string;
+    quantity: string;
+    importValueGbp: number;
+    paymentStatus: string;
+    expectedVerificationDate: string;
+    specialInstructions: string;
+    checklistItems: string[];
+  };
+  selectedAddOnIds: string[];
+  supportingFiles: Record<string, string[]>;
+};
+
+type TrustedQuotePayload = {
+  selectedAddOns: {
+    id: string;
+    name: string;
+    priceGbp: number;
+  }[];
+  finalEstimatedPriceGbp: number;
+  currency: string;
+};
+
+export function AgentJobDetail({ bookingReference }: AgentJobDetailProps) {
+  const [job, setJob] = useState<AgentJobDetailResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    loadJob();
+  }, [bookingReference]);
+
+  async function loadJob() {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const data = await getAgentJobByReference(
+        bookingReference,
+        temporaryAgentId,
+      );
+
+      setJob(data);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not load job details from the backend.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const bookingRequest = useMemo(
+    () => (job ? parseJson<BookingRequestPayload>(job.bookingRequestJson) : null),
+    [job],
+  );
+
+  const trustedQuote = useMemo(
+    () => (job ? parseJson<TrustedQuotePayload>(job.trustedQuoteJson) : null),
+    [job],
+  );
+
+  const videoEvidenceRequested =
+    trustedQuote?.selectedAddOns.some(
+      (addOn) => addOn.id === "video_recording",
+    ) ?? false;
+
+  if (isLoading) {
+    return (
+      <div className="rounded-md border border-sky-200 bg-sky-50 p-5 text-sm font-bold text-sky-900">
+        Loading assigned job from Spring Boot backend...
+      </div>
+    );
+  }
+
+  if (errorMessage || !job) {
+    return (
+      <div className="rounded-md border border-red-200 bg-red-50 p-5 text-sm font-bold text-red-900">
+        {errorMessage || "Job was not found."}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
@@ -22,21 +135,30 @@ export function AgentJobDetail({ job }: AgentJobDetailProps) {
             <h2 className="mt-2 text-3xl font-black text-slate-950">
               {job.bookingReference}
             </h2>
-            <p className="mt-2 text-slate-600">{job.package.title}</p>
+            <p className="mt-2 text-slate-600">
+              {getPackageTitle(job.packageId)}
+            </p>
           </div>
-          <AgentStatusBadge
-            label={getAgentJobStatusLabel(job.status)}
-            tone={getAgentJobStatusTone(job.status)}
-          />
+          <span className={getStatusClassName(job.status)}>
+            {formatLabel(job.status)}
+          </span>
         </div>
 
         <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SummaryItem label="Scheduled visit" value={job.scheduledVisitDateTime} />
-          <SummaryItem label="Assigned agent" value={job.assignedAgentName} />
-          <SummaryItem label="Exporter city" value={job.exporter.city} />
+          <SummaryItem
+            label="Expected visit"
+            value={
+              bookingRequest?.productOrderDetails.expectedVerificationDate ||
+              "Not provided"
+            }
+          />
+          <SummaryItem label="Assigned agent" value={job.assignedAgentId} />
+          <SummaryItem label="Exporter city" value={job.exporterCity} />
           <SummaryItem
             label="Requested checks"
-            value={`${job.instructions.checklistItems.length} items`}
+            value={`${
+              bookingRequest?.productOrderDetails.checklistItems.length ?? 0
+            } items`}
           />
         </dl>
       </section>
@@ -47,16 +169,28 @@ export function AgentJobDetail({ job }: AgentJobDetailProps) {
             Exporter location
           </p>
           <h3 className="mt-2 text-2xl font-black text-slate-950">
-            {job.exporter.businessName}
+            {bookingRequest?.exporterDetails.businessName ?? "Exporter"}
           </h3>
 
           <dl className="mt-5 divide-y divide-slate-100">
-            <DetailRow label="Contact person" value={job.exporter.contactPerson} />
-            <DetailRow label="Phone" value={job.exporter.phone} />
-            <DetailRow label="Full address" value={job.exporter.fullAddress} />
-            <DetailRow label="City" value={job.exporter.city} />
-            <DetailRow label="State" value={job.exporter.state} />
-            <DetailLink label="Google Maps link" href={job.exporter.googleMapsLink} />
+            <DetailRow
+              label="Contact person"
+              value={bookingRequest?.exporterDetails.contactPerson ?? ""}
+            />
+            <DetailRow
+              label="Phone"
+              value={bookingRequest?.exporterDetails.phone ?? ""}
+            />
+            <DetailRow
+              label="Full address"
+              value={bookingRequest?.exporterDetails.fullAddress ?? ""}
+            />
+            <DetailRow label="City" value={job.exporterCity} />
+            <DetailRow label="State" value={job.exporterState} />
+            <DetailLink
+              label="Google Maps link"
+              href={bookingRequest?.exporterDetails.googleMapsLink ?? ""}
+            />
           </dl>
         </article>
 
@@ -66,10 +200,10 @@ export function AgentJobDetail({ job }: AgentJobDetailProps) {
             Verify only the customer-requested scope. Do not arrange freight,
             customs, insurance, or logistics services.
           </p>
-          {job.exporter.googleMapsLink ? (
+          {bookingRequest?.exporterDetails.googleMapsLink ? (
             <a
               className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-primary-dark"
-              href={job.exporter.googleMapsLink}
+              href={bookingRequest.exporterDetails.googleMapsLink}
               rel="noreferrer"
               target="_blank"
             >
@@ -77,7 +211,7 @@ export function AgentJobDetail({ job }: AgentJobDetailProps) {
             </a>
           ) : (
             <p className="mt-5 rounded-md border border-white/10 bg-white/5 p-3 text-sm font-semibold text-slate-200">
-              No Google Maps link was provided for this demo job.
+              No Google Maps link was provided.
             </p>
           )}
         </aside>
@@ -94,20 +228,31 @@ export function AgentJobDetail({ job }: AgentJobDetailProps) {
         <dl className="mt-5 divide-y divide-slate-100">
           <DetailRow
             label="Product category"
-            value={job.instructions.productCategory}
+            value={bookingRequest?.productOrderDetails.productCategory ?? ""}
           />
           <DetailRow
             label="Product description"
-            value={job.instructions.productDescription}
+            value={bookingRequest?.productOrderDetails.productDescription ?? ""}
           />
-          <DetailRow label="Quantity" value={job.instructions.quantity} />
+          <DetailRow
+            label="Quantity"
+            value={bookingRequest?.productOrderDetails.quantity ?? ""}
+          />
+          <DetailRow
+            label="Import value"
+            value={formatGbp(job.importValueGbp)}
+          />
+          <DetailRow
+            label="Final estimated price"
+            value={formatGbp(job.finalEstimatedPriceGbp)}
+          />
           <DetailRow
             label="Special instructions"
-            value={job.instructions.specialInstructions}
+            value={bookingRequest?.productOrderDetails.specialInstructions ?? ""}
           />
           <DetailRow
             label="Video requested"
-            value={job.instructions.videoEvidenceRequested ? "Yes" : "No"}
+            value={videoEvidenceRequested ? "Yes" : "No"}
           />
         </dl>
 
@@ -116,28 +261,29 @@ export function AgentJobDetail({ job }: AgentJobDetailProps) {
             Customer request scope
           </h4>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {job.instructions.checklistItems.map((item) => (
-              <div
-                className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800"
-                key={item}
-              >
-                {item}
-              </div>
-            ))}
+            {(bookingRequest?.productOrderDetails.checklistItems ?? []).map(
+              (item) => (
+                <div
+                  className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800"
+                  key={item}
+                >
+                  {item}
+                </div>
+              ),
+            )}
           </div>
         </div>
       </section>
 
       <EvidenceUploadPlaceholder
-        videoEvidenceRequested={job.instructions.videoEvidenceRequested}
+        videoEvidenceRequested={videoEvidenceRequested}
       />
       <VisitResultForm />
 
       <p className="rounded-md border border-slate-200 bg-white p-4 text-sm text-slate-600">
-        Future integration point: GET /api/agent/jobs/{job.id} will load this
-        job, POST /api/agent/jobs/{job.id}/evidence will upload secure evidence,
-        and POST /api/agent/jobs/{job.id}/submit-result will submit the visit
-        result.
+        Backend source: GET /api/agent/jobs/{job.bookingReference}?agentId=
+        {temporaryAgentId}. Evidence upload and visit result submission will be
+        connected later.
       </p>
     </div>
   );
@@ -194,4 +340,45 @@ function DetailLink({
       </dd>
     </div>
   );
+}
+
+function parseJson<TValue>(jsonValue: string): TValue | null {
+  try {
+    return JSON.parse(jsonValue) as TValue;
+  } catch {
+    return null;
+  }
+}
+
+function getPackageTitle(packageId: string) {
+  return (
+    BOOKING_PACKAGES.find((bookingPackage) => bookingPackage.id === packageId)
+      ?.title ?? packageId
+  );
+}
+
+function formatLabel(value: string) {
+  return value
+    .replaceAll("-", " ")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function getStatusClassName(status: string) {
+  const baseClassName =
+    "inline-flex rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.12em]";
+
+  if (status === "assigned") {
+    return `${baseClassName} border-violet-200 bg-violet-50 text-violet-800`;
+  }
+
+  if (status === "in-review") {
+    return `${baseClassName} border-sky-200 bg-sky-50 text-sky-800`;
+  }
+
+  if (status === "completed") {
+    return `${baseClassName} border-emerald-200 bg-emerald-50 text-emerald-800`;
+  }
+
+  return `${baseClassName} border-slate-200 bg-slate-50 text-slate-700`;
 }

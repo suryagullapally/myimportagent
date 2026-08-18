@@ -1,49 +1,50 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Button } from "@/components/ui";
+import { useEffect, useMemo, useState } from "react";
 import {
-  AGENT_AVAILABILITY_OPTIONS,
-  AGENT_JOBS,
-  AGENT_PORTAL_PROFILE,
-  getAgentAvailabilityStatusLabel,
-  getAgentJobStatusLabel,
-} from "@/lib/mock";
-import type { AgentAvailabilityStatus } from "@/types";
+  getAgentJobs,
+  type AgentJobListItem,
+} from "@/lib/api/agentJobs";
 import { AgentStatCard } from "./AgentStatCard";
-import {
-  AgentStatusBadge,
-  getAgentAvailabilityStatusTone,
-  getAgentJobStatusTone,
-} from "./AgentStatusBadge";
+
+const temporaryAgentId = "agent-hyderabad-1494";
 
 export function AgentOverview() {
-  const [availabilityStatus, setAvailabilityStatus] =
-    useState<AgentAvailabilityStatus>("available");
-  const [demoMessage, setDemoMessage] = useState("");
+  const [jobs, setJobs] = useState<AgentJobListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const assignedJobs = AGENT_JOBS.length;
-  const scheduledToday = AGENT_JOBS.filter((job) =>
-    job.scheduledVisitDateTime.startsWith("13 Aug 2026"),
-  ).length;
-  const evidencePending = AGENT_JOBS.filter(
-    (job) => job.status === "evidence-pending",
-  ).length;
-  const completedThisMonth = AGENT_JOBS.filter(
-    (job) => job.status === "completed",
-  ).length;
-  const nextJob =
-    AGENT_JOBS.find((job) => job.status !== "completed") ?? AGENT_JOBS[0];
+  useEffect(() => {
+    loadJobs();
+  }, []);
 
-  function handleStatusChange(status: AgentAvailabilityStatus) {
-    // Future integration point: PATCH /api/agent/profile/status will persist
-    // agent availability once Spring Security/JWT agent login is connected.
-    setAvailabilityStatus(status);
-    setDemoMessage(
-      `Demo status changed to ${getAgentAvailabilityStatusLabel(status)} on this screen only.`,
-    );
+  async function loadJobs() {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const data = await getAgentJobs(temporaryAgentId);
+      setJobs(data);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not load assigned jobs from the backend.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
+
+  const assignedJobs = jobs.length;
+  const activeJobs = jobs.filter((job) => job.status !== "completed").length;
+  const completedJobs = jobs.filter((job) => job.status === "completed").length;
+
+  const nextJob = useMemo(
+    () => jobs.find((job) => job.status !== "completed") ?? jobs[0],
+    [jobs],
+  );
 
   return (
     <div className="space-y-8">
@@ -55,118 +56,113 @@ export function AgentOverview() {
           Assigned verification work
         </h2>
         <p className="mt-2 max-w-2xl text-slate-600">
-          View assigned local verification jobs, upcoming visit details, and
-          evidence tasks. This portal is frontend-only for now.
+          View assigned verification jobs from PostgreSQL through the Java
+          Spring Boot backend.
+        </p>
+        <p className="mt-2 text-sm font-semibold text-slate-500">
+          Temporary test agent: {temporaryAgentId}
         </p>
       </section>
 
+      {errorMessage && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-900">
+          {errorMessage}
+        </div>
+      )}
+
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <AgentStatCard
-          hint="Local mock jobs assigned"
+          hint="Jobs assigned to this agent"
           label="Assigned jobs"
-          value={String(assignedJobs)}
+          value={isLoading ? "..." : String(assignedJobs)}
         />
         <AgentStatCard
-          hint="Scheduled for 13 Aug 2026"
-          label="Scheduled today"
-          value={String(scheduledToday)}
+          hint="Not completed yet"
+          label="Active jobs"
+          value={isLoading ? "..." : String(activeJobs)}
         />
         <AgentStatCard
-          hint="Visit result still needs evidence"
-          label="Evidence pending"
-          value={String(evidencePending)}
+          hint="Completed status"
+          label="Completed jobs"
+          value={isLoading ? "..." : String(completedJobs)}
         />
         <AgentStatCard
-          hint="Completed mock jobs in August"
-          label="Completed this month"
-          value={String(completedThisMonth)}
+          hint="Temporary test identity"
+          label="Agent ID"
+          value="1494"
         />
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <article className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
-                Next assigned job
-              </p>
-              <h3 className="mt-2 text-2xl font-black text-slate-950">
-                {nextJob.exporter.businessName}
-              </h3>
-              <p className="mt-2 text-slate-600">
-                {nextJob.exporter.city}, {nextJob.exporter.state}
-              </p>
+      {nextJob ? (
+        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+          <article className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
+                  Next assigned job
+                </p>
+                <h3 className="mt-2 text-2xl font-black text-slate-950">
+                  {nextJob.exporterCity}, {nextJob.exporterState}
+                </h3>
+                <p className="mt-2 text-slate-600">
+                  {nextJob.bookingReference}
+                </p>
+              </div>
+              <span className={getStatusClassName(nextJob.status)}>
+                {formatLabel(nextJob.status)}
+              </span>
             </div>
-            <AgentStatusBadge
-              label={getAgentJobStatusLabel(nextJob.status)}
-              tone={getAgentJobStatusTone(nextJob.status)}
-            />
-          </div>
 
-          <dl className="mt-5 grid gap-4 sm:grid-cols-2">
-            <InfoItem label="Booking reference" value={nextJob.bookingReference} />
-            <InfoItem label="Package" value={nextJob.package.title} />
-            <InfoItem label="Scheduled visit" value={nextJob.scheduledVisitDateTime} />
-            <InfoItem
-              label="Checklist"
-              value={`${nextJob.instructions.checklistItems.length} items requested`}
-            />
-          </dl>
+            <dl className="mt-5 grid gap-4 sm:grid-cols-2">
+              <InfoItem label="Booking reference" value={nextJob.bookingReference} />
+              <InfoItem label="Package" value={nextJob.packageId} />
+              <InfoItem label="Importer" value={nextJob.importerEmail} />
+              <InfoItem label="Created" value={formatDate(nextJob.createdAt)} />
+            </dl>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Link
-              className="inline-flex min-h-12 items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-primary-dark"
-              href={`/agent/jobs/${nextJob.id}`}
-            >
-              View next job
-            </Link>
-            <Link
-              className="inline-flex min-h-12 items-center justify-center rounded-md border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50"
-              href="/agent/jobs"
-            >
-              Go to My Jobs
-            </Link>
-          </div>
-        </article>
-
-        <aside className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-bold text-slate-950">
-                Agent status
-              </h3>
-              <p className="mt-1 text-sm text-slate-600">
-                {AGENT_PORTAL_PROFILE.city}, {AGENT_PORTAL_PROFILE.state}
-              </p>
-            </div>
-            <AgentStatusBadge
-              label={getAgentAvailabilityStatusLabel(availabilityStatus)}
-              tone={getAgentAvailabilityStatusTone(availabilityStatus)}
-            />
-          </div>
-
-          <div className="mt-5 grid gap-2">
-            {AGENT_AVAILABILITY_OPTIONS.map((option) => (
-              <Button
-                className="w-full justify-center"
-                key={option.value}
-                onClick={() => handleStatusChange(option.value)}
-                variant={
-                  option.value === availabilityStatus ? "primary" : "secondary"
-                }
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                className="inline-flex min-h-12 items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-primary-dark"
+                href={`/agent/jobs/${encodeURIComponent(
+                  nextJob.bookingReference,
+                )}`}
               >
-                {option.label}
-              </Button>
-            ))}
-          </div>
+                View next job
+              </Link>
+              <Link
+                className="inline-flex min-h-12 items-center justify-center rounded-md border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50"
+                href="/agent/jobs"
+              >
+                Go to My Jobs
+              </Link>
+            </div>
+          </article>
 
-          {demoMessage && (
-            <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-800">
-              {demoMessage}
+          <aside className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-xl font-bold text-slate-950">
+              Agent status
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Availability update will be connected later after agent
+              authentication.
             </p>
-          )}
-        </aside>
-      </section>
+
+            <button
+              className="mt-5 min-h-12 w-full rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800 shadow-sm transition hover:bg-emerald-100"
+              onClick={loadJobs}
+              type="button"
+            >
+              Refresh assigned jobs
+            </button>
+          </aside>
+        </section>
+      ) : (
+        <div className="rounded-md border border-dashed border-slate-300 bg-white p-8 text-center text-sm font-semibold text-slate-500">
+          {isLoading
+            ? "Loading assigned jobs..."
+            : "No jobs are assigned to this test agent yet."}
+        </div>
+      )}
     </div>
   );
 }
@@ -183,4 +179,38 @@ function InfoItem({
       <dd className="mt-2 text-sm font-bold text-slate-950">{value}</dd>
     </div>
   );
+}
+
+function formatDate(dateValue: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(dateValue));
+}
+
+function formatLabel(value: string) {
+  return value
+    .replaceAll("-", " ")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function getStatusClassName(status: string) {
+  const baseClassName =
+    "inline-flex rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.12em]";
+
+  if (status === "assigned") {
+    return `${baseClassName} border-violet-200 bg-violet-50 text-violet-800`;
+  }
+
+  if (status === "in-review") {
+    return `${baseClassName} border-sky-200 bg-sky-50 text-sky-800`;
+  }
+
+  if (status === "completed") {
+    return `${baseClassName} border-emerald-200 bg-emerald-50 text-emerald-800`;
+  }
+
+  return `${baseClassName} border-slate-200 bg-slate-50 text-slate-700`;
 }

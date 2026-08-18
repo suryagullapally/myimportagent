@@ -6,7 +6,5 @@ export const metadata: Metadata = {
 };
 
 export default function AgentJobsPage() {
-  // Future integration point: GET /api/agent/jobs will load assigned jobs for
-  // the authenticated agent. Filtering is local mock state for now.
   return <AgentJobsList />;
 }
