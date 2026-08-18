@@ -278,7 +278,11 @@ export function AgentJobDetail({ bookingReference }: AgentJobDetailProps) {
       <EvidenceUploadPlaceholder
         videoEvidenceRequested={videoEvidenceRequested}
       />
-      <VisitResultForm />
+      <VisitResultForm
+  agentId={temporaryAgentId}
+  bookingReference={job.bookingReference}
+  onSubmitted={loadJob}
+/>
 
       <p className="rounded-md border border-slate-200 bg-white p-4 text-sm text-slate-600">
         Backend source: GET /api/agent/jobs/{job.bookingReference}?agentId=

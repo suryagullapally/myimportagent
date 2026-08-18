@@ -2,31 +2,77 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui";
-import { VISIT_RESULT_OPTIONS } from "@/lib/mock";
-import type { VisitResult } from "@/types";
+import { submitAgentVisitResult } from "@/lib/api/agentJobs";
 
-export function VisitResultForm() {
-  const [agentNotes, setAgentNotes] = useState("");
-  const [redFlags, setRedFlags] = useState("");
-  const [visitResult, setVisitResult] = useState<VisitResult>("verified");
+type VisitResultFormProps = Readonly<{
+  agentId: string;
+  bookingReference: string;
+  onSubmitted?: () => void;
+}>;
+
+const visitResultOptions = [
+  {
+    label: "Passed",
+    value: "passed",
+  },
+  {
+    label: "Passed with minor issues",
+    value: "passed-with-minor-issues",
+  },
+  {
+    label: "Failed",
+    value: "failed",
+  },
+  {
+    label: "Could not verify",
+    value: "could-not-verify",
+  },
+];
+
+export function VisitResultForm({
+  agentId,
+  bookingReference,
+  onSubmitted,
+}: VisitResultFormProps) {
+  const [visitSummary, setVisitSummary] = useState("");
+  const [issuesFound, setIssuesFound] = useState("");
+  const [agentNextAction, setAgentNextAction] = useState("");
+  const [visitResultStatus, setVisitResultStatus] = useState("passed");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  function handleSubmit() {
-    // Future integration point:
-    // PATCH /api/agent/jobs/{id}/status
-    // POST /api/agent/jobs/{id}/submit-result
-    // The Java backend will validate the agent identity and attach evidence.
-    setIsSubmitting(true);
-    setSuccessMessage("");
+  async function handleSubmit() {
+    try {
+      setIsSubmitting(true);
+      setSuccessMessage("");
+      setErrorMessage("");
 
-    window.setTimeout(() => {
-      setIsSubmitting(false);
+      await submitAgentVisitResult(bookingReference, agentId, {
+        visitResultStatus,
+        visitSummary: visitSummary.trim(),
+        issuesFound: issuesFound.trim(),
+        agentNextAction: agentNextAction.trim(),
+      });
+
       setSuccessMessage(
-        "Demo evidence submitted successfully. Backend upload and admin review will be connected later.",
+        "Visit result submitted successfully. This booking is now completed.",
       );
-    }, 650);
+
+      onSubmitted?.();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not submit visit result.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
+
+  const isSubmitDisabled =
+    isSubmitting || !visitResultStatus.trim() || !visitSummary.trim();
 
   return (
     <section className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
@@ -36,15 +82,21 @@ export function VisitResultForm() {
       <h3 className="mt-2 text-2xl font-black text-slate-950">
         Submit visit result
       </h3>
+      <p className="mt-2 text-sm text-slate-600">
+        This form submits the visit result to Spring Boot and saves it in
+        PostgreSQL.
+      </p>
 
       <div className="mt-5 space-y-4">
         <label className="block">
-          <span className="text-sm font-bold text-slate-700">Agent notes</span>
+          <span className="text-sm font-bold text-slate-700">
+            Visit summary
+          </span>
           <textarea
             className={fieldClassName}
-            onChange={(event) => setAgentNotes(event.target.value)}
+            onChange={(event) => setVisitSummary(event.target.value)}
             placeholder="Summarise what happened during the visit."
-            value={agentNotes}
+            value={visitSummary}
           />
         </label>
 
@@ -54,9 +106,21 @@ export function VisitResultForm() {
           </span>
           <textarea
             className={fieldClassName}
-            onChange={(event) => setRedFlags(event.target.value)}
+            onChange={(event) => setIssuesFound(event.target.value)}
             placeholder="Mention refused entry, mismatch, missing stock, damaged packing, or other concerns."
-            value={redFlags}
+            value={issuesFound}
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-sm font-bold text-slate-700">
+            Agent next action
+          </span>
+          <textarea
+            className={fieldClassName}
+            onChange={(event) => setAgentNextAction(event.target.value)}
+            placeholder="Example: Admin can prepare customer report."
+            value={agentNextAction}
           />
         </label>
 
@@ -65,16 +129,16 @@ export function VisitResultForm() {
             Result option
           </legend>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {VISIT_RESULT_OPTIONS.map((option) => (
+            {visitResultOptions.map((option) => (
               <label
                 className="flex min-h-12 cursor-pointer items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 transition hover:border-emerald-200 hover:bg-emerald-50"
                 key={option.value}
               >
                 <input
-                  checked={visitResult === option.value}
+                  checked={visitResultStatus === option.value}
                   className="size-4 accent-emerald-600"
                   name="visit-result"
-                  onChange={() => setVisitResult(option.value)}
+                  onChange={() => setVisitResultStatus(option.value)}
                   type="radio"
                 />
                 {option.label}
@@ -83,17 +147,32 @@ export function VisitResultForm() {
           </div>
         </fieldset>
 
+        <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          <p>
+            <strong>Booking:</strong> {bookingReference}
+          </p>
+          <p className="mt-1">
+            <strong>Agent:</strong> {agentId}
+          </p>
+        </div>
+
         <Button
           className="w-full sm:w-auto"
-          disabled={isSubmitting}
+          disabled={isSubmitDisabled}
           onClick={handleSubmit}
         >
-          {isSubmitting ? "Submitting demo..." : "Submit Evidence"}
+          {isSubmitting ? "Submitting..." : "Submit visit result"}
         </Button>
 
         {successMessage && (
           <p className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
             {successMessage}
+          </p>
+        )}
+
+        {errorMessage && (
+          <p className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-900">
+            {errorMessage}
           </p>
         )}
       </div>

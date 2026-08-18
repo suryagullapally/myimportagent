@@ -20,6 +20,11 @@ export type AgentJobDetail = {
   status: string;
   assignedAgentId: string;
   internalNotes: string;
+  visitResultStatus: string;
+visitSummary: string;
+issuesFound: string;
+agentNextAction: string;
+visitCompletedAt: string | null;
   importerEmail: string;
   exporterState: string;
   exporterCity: string;
@@ -29,6 +34,7 @@ export type AgentJobDetail = {
   bookingRequestJson: string;
   trustedQuoteJson: string;
   createdAt: string;
+  
 };
 
 export type AgentJobErrorResponse = {
@@ -83,6 +89,42 @@ export async function getAgentJobByReference(
   if (!response.ok) {
     const errorData = (await response.json()) as AgentJobErrorResponse;
     throw new Error(errorData.message || "Failed to load agent job details");
+  }
+
+  return response.json();
+
+  
+}
+export type AgentVisitResultRequest = {
+  visitResultStatus: string;
+  visitSummary: string;
+  issuesFound: string;
+  agentNextAction: string;
+};
+
+export async function submitAgentVisitResult(
+  bookingReference: string,
+  agentId: string,
+  request: AgentVisitResultRequest,
+): Promise<AgentJobDetail> {
+  const params = new URLSearchParams({ agentId });
+
+  const response = await fetch(
+    `${getApiBaseUrl()}/api/agent/jobs/${encodeURIComponent(
+      bookingReference,
+    )}/submit-result?${params.toString()}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    },
+  );
+
+  if (!response.ok) {
+    const errorData = (await response.json()) as AgentJobErrorResponse;
+    throw new Error(errorData.message || "Failed to submit visit result");
   }
 
   return response.json();
