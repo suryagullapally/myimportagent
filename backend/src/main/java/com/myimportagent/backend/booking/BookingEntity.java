@@ -42,6 +42,22 @@ private String agentNextAction;
 
 @Column(name = "visit_completed_at")
 private LocalDateTime visitCompletedAt;
+
+@Column(name = "customer_report_status")
+private String customerReportStatus;
+
+@Column(name = "customer_report_summary", columnDefinition = "TEXT")
+private String customerReportSummary;
+
+@Column(name = "customer_report_recommendation", columnDefinition = "TEXT")
+private String customerReportRecommendation;
+
+@Column(name = "customer_report_admin_notes", columnDefinition = "TEXT")
+private String customerReportAdminNotes;
+
+@Column(name = "customer_report_completed_at")
+private LocalDateTime customerReportCompletedAt;
+
     @Column(name = "importer_email", nullable = false)
     private String importerEmail;
 
@@ -96,6 +112,11 @@ this.visitSummary = "";
 this.issuesFound = "";
 this.agentNextAction = "";
 this.visitCompletedAt = null;
+this.customerReportStatus = "";
+this.customerReportSummary = "";
+this.customerReportRecommendation = "";
+this.customerReportAdminNotes = "";
+this.customerReportCompletedAt = null;
         this.importerEmail = importerEmail;
         this.exporterState = exporterState;
         this.exporterCity = exporterCity;
@@ -150,6 +171,27 @@ public String getAgentNextAction() {
 public LocalDateTime getVisitCompletedAt() {
     return visitCompletedAt;
 }
+
+public String getCustomerReportStatus() {
+    return customerReportStatus;
+}
+
+public String getCustomerReportSummary() {
+    return customerReportSummary;
+}
+
+public String getCustomerReportRecommendation() {
+    return customerReportRecommendation;
+}
+
+public String getCustomerReportAdminNotes() {
+    return customerReportAdminNotes;
+}
+
+public LocalDateTime getCustomerReportCompletedAt() {
+    return customerReportCompletedAt;
+}
+
     public String getImporterEmail() {
         return importerEmail;
     }
@@ -207,5 +249,19 @@ public void submitVisitResult(
     this.agentNextAction = agentNextAction;
     this.visitCompletedAt = visitCompletedAt;
     this.status = "completed";
+}
+public void submitCustomerReport(
+        String customerReportStatus,
+        String customerReportSummary,
+        String customerReportRecommendation,
+        String customerReportAdminNotes,
+        LocalDateTime customerReportCompletedAt
+) {
+    this.customerReportStatus = customerReportStatus;
+    this.customerReportSummary = customerReportSummary;
+    this.customerReportRecommendation = customerReportRecommendation;
+    this.customerReportAdminNotes = customerReportAdminNotes;
+    this.customerReportCompletedAt = customerReportCompletedAt;
+    this.status = "report-ready";
 }
 }

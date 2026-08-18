@@ -103,4 +103,19 @@ public ResponseEntity<?> submitAgentVisitResult(
                 .body(new BookingErrorResponse(exception.getMessage()));
     }
 }
+@PostMapping("/api/bookings/{bookingReference}/admin/customer-report")
+public ResponseEntity<?> submitAdminCustomerReport(
+        @PathVariable String bookingReference,
+        @RequestBody AdminCustomerReportRequest request
+) {
+    try {
+        BookingDetailResponse response =
+                bookingService.submitAdminCustomerReport(bookingReference, request);
+
+        return ResponseEntity.ok(response);
+    } catch (IllegalArgumentException exception) {
+        return ResponseEntity.badRequest()
+                .body(new BookingErrorResponse(exception.getMessage()));
+    }
+}
 }

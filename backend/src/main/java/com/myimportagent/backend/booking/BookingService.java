@@ -115,6 +115,11 @@ private BookingDetailResponse toDetailResponse(BookingEntity booking) {
             booking.getIssuesFound(),
             booking.getAgentNextAction(),
             booking.getVisitCompletedAt(),
+            booking.getCustomerReportStatus(),
+            booking.getCustomerReportSummary(),
+            booking.getCustomerReportRecommendation(),
+            booking.getCustomerReportAdminNotes(),
+            booking.getCustomerReportCompletedAt(),
             booking.getImporterEmail(),
             booking.getExporterState(),
             booking.getExporterCity(),
@@ -222,6 +227,53 @@ public BookingDetailResponse submitAgentVisitResult(
             request.visitSummary().trim(),
             request.issuesFound() == null ? "" : request.issuesFound().trim(),
             request.agentNextAction() == null ? "" : request.agentNextAction().trim(),
+            LocalDateTime.now()
+    );
+
+    BookingEntity savedBooking = bookingRepository.save(booking);
+
+    return toDetailResponse(savedBooking);
+}
+
+@Transactional
+public BookingDetailResponse submitAdminCustomerReport(
+        String bookingReference,
+        AdminCustomerReportRequest request
+) {
+    if (isBlank(bookingReference)) {
+        throw new IllegalArgumentException("Booking reference is required.");
+    }
+
+    if (request == null) {
+        throw new IllegalArgumentException("Customer report request is required.");
+    }
+
+    if (isBlank(request.customerReportStatus())) {
+        throw new IllegalArgumentException("Customer report status is required.");
+    }
+
+    if (isBlank(request.customerReportSummary())) {
+        throw new IllegalArgumentException("Customer report summary is required.");
+    }
+
+    if (isBlank(request.customerReportRecommendation())) {
+        throw new IllegalArgumentException("Customer report recommendation is required.");
+    }
+
+    BookingEntity booking = bookingRepository.findByBookingReference(bookingReference)
+            .orElseThrow(() -> new IllegalArgumentException("Booking was not found."));
+
+    if (isBlank(booking.getVisitResultStatus())) {
+        throw new IllegalArgumentException("Agent visit result must be submitted before preparing the customer report.");
+    }
+
+    booking.submitCustomerReport(
+            request.customerReportStatus().trim(),
+            request.customerReportSummary().trim(),
+            request.customerReportRecommendation().trim(),
+            request.customerReportAdminNotes() == null
+                    ? ""
+                    : request.customerReportAdminNotes().trim(),
             LocalDateTime.now()
     );
 
