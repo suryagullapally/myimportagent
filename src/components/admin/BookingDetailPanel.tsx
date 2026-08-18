@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui";
 import { BOOKING_PACKAGES, PAYMENT_STATUS_OPTIONS } from "@/lib/constants";
 import {
+  ADMIN_AGENTS,
+  ADMIN_BOOKING_STATUS_OPTIONS,
+} from "@/lib/mock";
+import {
   getAdminBookingByReference,
+  updateAdminBookingFields,
   type AdminBookingDetail,
 } from "@/lib/api/adminBookings";
 import { formatGbp } from "@/lib/utils/pricing";
@@ -70,9 +75,13 @@ export function BookingDetailPanel({
   bookingReference,
 }: BookingDetailPanelProps) {
   const [booking, setBooking] = useState<AdminBookingDetail | null>(null);
+  const [bookingStatus, setBookingStatus] = useState("");
+  const [assignedAgentId, setAssignedAgentId] = useState("");
+  const [internalNotes, setInternalNotes] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [demoMessage, setDemoMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     loadBooking();
@@ -82,9 +91,14 @@ export function BookingDetailPanel({
     try {
       setIsLoading(true);
       setErrorMessage("");
+      setSuccessMessage("");
 
       const data = await getAdminBookingByReference(bookingReference);
+
       setBooking(data);
+      setBookingStatus(data.status);
+      setAssignedAgentId(data.assignedAgentId ?? "");
+      setInternalNotes(data.internalNotes ?? "");
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -93,6 +107,41 @@ export function BookingDetailPanel({
       );
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleSaveChanges() {
+    if (!booking) {
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      const updatedBooking = await updateAdminBookingFields(
+        booking.bookingReference,
+        {
+          status: bookingStatus,
+          assignedAgentId,
+          internalNotes,
+        },
+      );
+
+      setBooking(updatedBooking);
+      setBookingStatus(updatedBooking.status);
+      setAssignedAgentId(updatedBooking.assignedAgentId ?? "");
+      setInternalNotes(updatedBooking.internalNotes ?? "");
+      setSuccessMessage("Admin changes saved to PostgreSQL successfully.");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not save admin changes.",
+      );
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -126,11 +175,9 @@ export function BookingDetailPanel({
     bookingRequest?.productOrderDetails.paymentStatus ??
     "Not provided";
 
-  function handleSaveChanges() {
-    setDemoMessage(
-      "Admin update endpoints are not connected yet. This page is currently read-only from PostgreSQL.",
-    );
-  }
+  const assignedAgent = ADMIN_AGENTS.find(
+    (agent) => agent.id === assignedAgentId,
+  );
 
   if (isLoading) {
     return (
@@ -140,10 +187,18 @@ export function BookingDetailPanel({
     );
   }
 
-  if (errorMessage || !booking) {
+  if (errorMessage && !booking) {
     return (
       <div className="rounded-md border border-red-200 bg-red-50 p-5 text-sm font-bold text-red-900">
-        {errorMessage || "Booking was not found."}
+        {errorMessage}
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="rounded-md border border-red-200 bg-red-50 p-5 text-sm font-bold text-red-900">
+        Booking was not found.
       </div>
     );
   }
@@ -173,9 +228,15 @@ export function BookingDetailPanel({
         </div>
       </div>
 
-      {demoMessage && (
+      {successMessage && (
         <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
-          {demoMessage}
+          {successMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-900">
+          {errorMessage}
         </div>
       )}
 
@@ -374,23 +435,85 @@ export function BookingDetailPanel({
         <aside className="space-y-6">
           <section className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-xl font-bold text-slate-950">
-              Admin actions placeholder
+              Admin actions
             </h3>
             <p className="mt-2 text-sm text-slate-600">
-              This page is now reading from PostgreSQL. Updating status,
-              assigning agents, and saving internal notes will be connected with
-              PATCH APIs later.
+              These controls now update the booking in PostgreSQL through the
+              Spring Boot PATCH API.
             </p>
 
             <div className="mt-5 space-y-4">
-              <DetailRow label="Current status" value={formatLabel(booking.status)} />
-              <DetailRow label="Database ID" value={String(booking.id)} />
+              <label className="block">
+                <span className="text-sm font-bold text-slate-700">
+                  Booking status
+                </span>
+                <select
+                  className={fieldClassName}
+                  onChange={(event) => setBookingStatus(event.target.value)}
+                  value={bookingStatus}
+                >
+                  {ADMIN_BOOKING_STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                  {!ADMIN_BOOKING_STATUS_OPTIONS.some(
+                    (option) => option.value === bookingStatus,
+                  ) && (
+                    <option value={bookingStatus}>
+                      {formatLabel(bookingStatus)}
+                    </option>
+                  )}
+                </select>
+              </label>
 
-              <Button className="w-full" onClick={handleSaveChanges}>
-                Save changes later
+              <label className="block">
+                <span className="text-sm font-bold text-slate-700">
+                  Assign agent
+                </span>
+                <select
+                  className={fieldClassName}
+                  onChange={(event) => setAssignedAgentId(event.target.value)}
+                  value={assignedAgentId}
+                >
+                  <option value="">Unassigned</option>
+                  {ADMIN_AGENTS.map((agent) => (
+                    <option key={agent.id} value={agent.id}>
+                      {agent.name} - {agent.city}
+                    </option>
+                  ))}
+                  {assignedAgentId &&
+                    !ADMIN_AGENTS.some((agent) => agent.id === assignedAgentId) && (
+                      <option value={assignedAgentId}>{assignedAgentId}</option>
+                    )}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-700">
+                  Internal admin notes
+                </span>
+                <textarea
+                  className={`${fieldClassName} min-h-32 resize-y`}
+                  onChange={(event) => setInternalNotes(event.target.value)}
+                  value={internalNotes}
+                />
+              </label>
+
+              <Button
+                className="w-full"
+                disabled={isSaving}
+                onClick={handleSaveChanges}
+              >
+                {isSaving ? "Saving..." : "Save changes"}
               </Button>
 
-              <Button className="w-full" onClick={loadBooking} variant="secondary">
+              <Button
+                className="w-full"
+                disabled={isSaving}
+                onClick={loadBooking}
+                variant="secondary"
+              >
                 Refresh from backend
               </Button>
             </div>
@@ -398,16 +521,19 @@ export function BookingDetailPanel({
 
           <section className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-lg font-bold text-slate-950">
-              Backend source
+              Current assignment
             </h3>
             <p className="mt-2 text-sm text-slate-600">
-              Loaded from GET /api/bookings/{booking.bookingReference}
+              {assignedAgent
+                ? `${assignedAgent.name}, ${assignedAgent.city}`
+                : assignedAgentId || "No agent selected"}
             </p>
+
             <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-              Saved in PostgreSQL
+              Backend source
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              This booking was saved through Spring Data JPA.
+              PATCH /api/bookings/{booking.bookingReference}/admin
             </p>
           </section>
         </aside>
@@ -591,6 +717,22 @@ function getStatusClassName(status: string) {
 
   if (status === "prepared") {
     return `${baseClassName} border-emerald-200 bg-emerald-50 text-emerald-800`;
+  }
+
+  if (status === "in-review") {
+    return `${baseClassName} border-sky-200 bg-sky-50 text-sky-800`;
+  }
+
+  if (status === "assigned") {
+    return `${baseClassName} border-violet-200 bg-violet-50 text-violet-800`;
+  }
+
+  if (status === "completed") {
+    return `${baseClassName} border-emerald-200 bg-emerald-50 text-emerald-800`;
+  }
+
+  if (status === "cancelled") {
+    return `${baseClassName} border-red-200 bg-red-50 text-red-800`;
   }
 
   return `${baseClassName} border-slate-200 bg-slate-50 text-slate-700`;

@@ -3,6 +3,7 @@ export type AdminBookingListItem = {
   bookingReference: string;
   packageId: string;
   status: string;
+  assignedAgentId: string;
   importerEmail: string;
   exporterState: string;
   exporterCity: string;
@@ -17,6 +18,8 @@ export type AdminBookingDetail = {
   bookingReference: string;
   packageId: string;
   status: string;
+  assignedAgentId: string;
+  internalNotes: string;
   importerEmail: string;
   exporterState: string;
   exporterCity: string;
@@ -26,6 +29,12 @@ export type AdminBookingDetail = {
   bookingRequestJson: string;
   trustedQuoteJson: string;
   createdAt: string;
+};
+
+export type AdminBookingUpdateRequest = {
+  status: string;
+  assignedAgentId: string;
+  internalNotes: string;
 };
 
 export type AdminBookingErrorResponse = {
@@ -67,6 +76,31 @@ export async function getAdminBookingByReference(
   if (!response.ok) {
     const errorData = (await response.json()) as AdminBookingErrorResponse;
     throw new Error(errorData.message || "Failed to load booking details");
+  }
+
+  return response.json();
+}
+
+export async function updateAdminBookingFields(
+  bookingReference: string,
+  request: AdminBookingUpdateRequest,
+): Promise<AdminBookingDetail> {
+  const response = await fetch(
+    `${getApiBaseUrl()}/api/bookings/${encodeURIComponent(
+      bookingReference,
+    )}/admin`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    },
+  );
+
+  if (!response.ok) {
+    const errorData = (await response.json()) as AdminBookingErrorResponse;
+    throw new Error(errorData.message || "Failed to update booking");
   }
 
   return response.json();
